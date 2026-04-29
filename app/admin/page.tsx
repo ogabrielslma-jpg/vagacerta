@@ -2,16 +2,28 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 
+type Experiencia = {
+  empresa: string; cargo: string; inicio: string; fim: string; atual: boolean; resumo: string;
+};
+
 type Cadastro = {
   id: string;
   nome: string;
   email: string;
   whatsapp: string;
+  data_nascimento: string | null;
+  idade: number | null;
+  sexo: string | null;
+  cep: string | null;
   cidade: string;
-  idade: number;
+  estado: string | null;
+  escolaridade: string | null;
+  areas_interesse: string[] | null;
   area: string;
+  experiencias: Experiencia[] | null;
   experiencia: string;
   disponibilidade: string;
+  turno: string | null;
   salario: string;
   bio: string;
   linkedin: string | null;
@@ -33,7 +45,6 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Cadastro | null>(null);
 
-  // Login
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoginError(null);
@@ -49,7 +60,6 @@ export default function AdminPage() {
     }
   };
 
-  // Auto-login se já tem senha em sessionStorage
   useEffect(() => {
     const saved = sessionStorage.getItem('vc_admin_pwd');
     if (saved) {
@@ -65,7 +75,6 @@ export default function AdminPage() {
     }
   }, []);
 
-  // Recarrega quando filtro/busca mudam
   useEffect(() => {
     if (!authed) return;
     setLoading(true);
@@ -91,7 +100,6 @@ export default function AdminPage() {
     });
     setCadastros(prev => prev.map(c => c.id === id ? { ...c, status: status as any } : c));
     if (selected && selected.id === id) setSelected({ ...selected, status: status as any });
-    // Recalc stats
     fetch('/api/admin/cadastros', { headers: { 'x-admin-password': pwd } })
       .then(r => r.json()).then(d => setStats(d.stats));
   };
@@ -107,12 +115,19 @@ export default function AdminPage() {
     return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   };
 
-  const whatsappLink = (n: string) => {
-    const clean = n.replace(/\D/g, '');
-    return `https://wa.me/55${clean}`;
+  const formatPeriodo = (exp: Experiencia) => {
+    const fmt = (m: string) => {
+      if (!m) return '';
+      const [y, mo] = m.split('-');
+      return `${mo}/${y}`;
+    };
+    const i = fmt(exp.inicio);
+    const f = exp.atual ? 'atual' : fmt(exp.fim);
+    return `${i}${f ? ` — ${f}` : ''}`;
   };
 
-  // ===== LOGIN SCREEN =====
+  const whatsappLink = (n: string) => `https://wa.me/55${n.replace(/\D/g, '')}`;
+
   if (!authed) {
     return (
       <div className="admin-shell">
@@ -138,7 +153,6 @@ export default function AdminPage() {
     );
   }
 
-  // ===== DASHBOARD =====
   return (
     <div className="admin-shell">
       <header className="admin-header">
@@ -178,7 +192,7 @@ export default function AdminPage() {
           <div className="table-row head">
             <div>Nome</div>
             <div>WhatsApp</div>
-            <div>Área</div>
+            <div>Áreas</div>
             <div>Cidade</div>
             <div>Status</div>
             <div>Data</div>
@@ -192,16 +206,19 @@ export default function AdminPage() {
               <div>Nenhum cadastro {filter !== 'todos' ? `com status "${filter}"` : 'ainda'}.</div>
             </div>
           ) : (
-            cadastros.map(c => (
-              <div key={c.id} className="table-row" onClick={() => setSelected(c)}>
-                <div><strong>{c.nome}</strong><div style={{ fontSize: 12, color: 'var(--ink-dim)' }}>{c.email}</div></div>
-                <div>{c.whatsapp}</div>
-                <div>{c.area}</div>
-                <div>{c.cidade}</div>
-                <div><span className={`status-pill status-${c.status}`}>{c.status}</span></div>
-                <div style={{ fontSize: 13, color: 'var(--ink-dim)' }}>{formatDate(c.created_at)}</div>
-              </div>
-            ))
+            cadastros.map(c => {
+              const areas = c.areas_interesse && c.areas_interesse.length > 0 ? c.areas_interesse : (c.area ? [c.area] : []);
+              return (
+                <div key={c.id} className="table-row" onClick={() => setSelected(c)}>
+                  <div><strong>{c.nome}</strong><div style={{ fontSize: 12, color: 'var(--ink-dim)' }}>{c.email}</div></div>
+                  <div>{c.whatsapp}</div>
+                  <div style={{ fontSize: 13 }}>{areas.slice(0, 2).join(', ')}{areas.length > 2 ? ` +${areas.length - 2}` : ''}</div>
+                  <div>{c.cidade}{c.estado ? `, ${c.estado}` : ''}</div>
+                  <div><span className={`status-pill status-${c.status}`}>{c.status}</span></div>
+                  <div style={{ fontSize: 13, color: 'var(--ink-dim)' }}>{formatDate(c.created_at)}</div>
+                </div>
+              );
+            })
           )}
         </div>
       </main>
@@ -229,20 +246,20 @@ export default function AdminPage() {
                   <div className="value">{selected.whatsapp}</div>
                 </div>
                 <div>
-                  <div className="label">Cidade · Idade</div>
-                  <div className="value">{selected.cidade} · {selected.idade} anos</div>
+                  <div className="label">Idade · Sexo</div>
+                  <div className="value">{selected.idade || '—'} anos · {selected.sexo || '—'}</div>
                 </div>
                 <div>
-                  <div className="label">Área</div>
-                  <div className="value">{selected.area}</div>
+                  <div className="label">Localização</div>
+                  <div className="value">{selected.cidade}{selected.estado ? ` / ${selected.estado}` : ''} {selected.cep ? `· CEP ${selected.cep}` : ''}</div>
                 </div>
                 <div>
-                  <div className="label">Experiência</div>
-                  <div className="value">{selected.experiencia}</div>
+                  <div className="label">Escolaridade</div>
+                  <div className="value">{selected.escolaridade || '—'}</div>
                 </div>
                 <div>
-                  <div className="label">Disponibilidade</div>
-                  <div className="value">{selected.disponibilidade}</div>
+                  <div className="label">Disponibilidade · Turno</div>
+                  <div className="value">{selected.disponibilidade}{selected.turno ? ` · ${selected.turno}` : ''}</div>
                 </div>
                 <div>
                   <div className="label">Pretensão salarial</div>
@@ -256,15 +273,37 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <div className="label" style={{ fontSize: 11, color: 'var(--ink-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Sobre</div>
+              <div className="detail-section-title">Áreas de interesse</div>
+              <div className="detail-areas">
+                {(selected.areas_interesse && selected.areas_interesse.length > 0
+                  ? selected.areas_interesse
+                  : (selected.area ? [selected.area] : [])
+                ).map(a => <span key={a} className="detail-area-chip">{a}</span>)}
+              </div>
+
+              <div className="detail-section-title">Sobre</div>
               <div className="detail-bio">{selected.bio}</div>
+
+              {selected.experiencias && selected.experiencias.length > 0 && (
+                <>
+                  <div className="detail-section-title">Experiências profissionais</div>
+                  {selected.experiencias.map((exp, i) => (
+                    <div key={i} className="detail-exp">
+                      <div className="exp-cargo">{exp.cargo}</div>
+                      <div className="exp-empresa">{exp.empresa}</div>
+                      <div className="exp-periodo">{formatPeriodo(exp)}</div>
+                      {exp.resumo && <div className="exp-resumo">{exp.resumo}</div>}
+                    </div>
+                  ))}
+                </>
+              )}
 
               <a href={whatsappLink(selected.whatsapp)} target="_blank" rel="noopener" className="btn-whatsapp">
                 💬 Chamar no WhatsApp
               </a>
 
               <div style={{ marginTop: 24 }}>
-                <div className="label" style={{ fontSize: 11, color: 'var(--ink-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Status</div>
+                <div className="detail-section-title" style={{ marginTop: 0 }}>Status</div>
                 <div className="status-buttons">
                   {(['novo', 'contatado', 'agendado', 'descartado'] as const).map(s => (
                     <button
