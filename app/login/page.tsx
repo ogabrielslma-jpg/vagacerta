@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { LogoMark } from '@/components/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function LoginPage() {
       <div className="admin-login">
         <div className="admin-login-card">
           <a href="/" className="logo" style={{ marginBottom: 24, justifyContent: 'center' }}>
-            <div className="logo-mark">V</div>
+            <LogoMark size={32} />
             VagaCerta
           </a>
           <h1>Entrar no seu painel</h1>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { LogoMark } from '@/components/Logo';
 
 type Vaga = {
   id: string;
@@ -84,7 +85,7 @@ export default function PainelPage() {
     <div className="painel-shell">
       <header className="admin-header">
         <a href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <h1><div className="logo-mark">V</div>VagaCerta</h1>
+          <h1><LogoMark size={28} />VagaCerta</h1>
         </a>
         <button className="btn-logout" onClick={logout}>Sair</button>
       </header>

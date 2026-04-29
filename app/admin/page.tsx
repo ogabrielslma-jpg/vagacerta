@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
+import { LogoMark } from '@/components/Logo';
 
 type Experiencia = {
   empresa: string; cargo: string; inicio: string; fim: string; atual: boolean; resumo: string;
@@ -133,8 +134,8 @@ export default function AdminPage() {
       <div className="admin-shell">
         <div className="admin-login">
           <div className="admin-login-card">
-            <div className="logo" style={{ marginBottom: 20 }}>
-              <div className="logo-mark">V</div>
+            <div className="logo" style={{ marginBottom: 20, justifyContent: 'center' }}>
+              <LogoMark size={32} />
               VagaCerta
             </div>
             <h1>Painel Admin</h1>
@@ -156,7 +157,7 @@ export default function AdminPage() {
   return (
     <div className="admin-shell">
       <header className="admin-header">
-        <h1><div className="logo-mark">V</div>VagaCerta · Admin</h1>
+        <h1><LogoMark size={28} />VagaCerta · Admin</h1>
         <button className="btn-logout" onClick={logout}>Sair</button>
       </header>
 

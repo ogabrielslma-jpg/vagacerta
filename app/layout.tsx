@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'VagaCerta — A maior agenciadora de empregos home office do Brasil',
-  description: 'Cadastre seu perfil e receba vagas home office direto no WhatsApp. Mais de 12.000 brasileiros já trabalham de casa com a VagaCerta.',
+  title: 'VagaCerta — Vagas home office de verdade no seu WhatsApp',
+  description: '12 mil pessoas já trocaram o escritório pelo sofá. Cadastre seu perfil e receba vagas home office sob medida no seu WhatsApp e e-mail. Entrevista online em menos de 7 dias.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>

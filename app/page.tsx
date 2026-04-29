@@ -3,6 +3,7 @@
 import { useState, FormEvent, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { EMPRESAS_BR, AREAS_INTERESSE, ESCOLARIDADE, TURNOS, DISPONIBILIDADE, SEXO } from '@/lib/constantes';
+import { LogoMark } from '@/components/Logo';
 
 type Experiencia = {
   empresa: string; cargo: string;
@@ -210,7 +211,7 @@ export default function Home() {
       <nav>
         <div className="nav-inner">
           <div className="logo">
-            <div className="logo-mark">V</div>
+            <LogoMark size={34} />
             VagaCerta
           </div>
           <div className="nav-links">
@@ -572,17 +573,23 @@ export default function Home() {
           <p className="section-sub">A gente fez o trabalho duro de criar uma rede com centenas de empresas que contratam home office. Você só precisa se cadastrar.</p>
           <div className="steps-grid">
             <div className="step-card">
-              <div className="step-icon">📝</div>
+              <div className="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E94560" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
               <h3>Cadastre seu perfil</h3>
               <p>Dados, áreas de interesse e experiências. 5 minutos e pronto. Tudo gratuito para o candidato.</p>
             </div>
             <div className="step-card">
-              <div className="step-icon">📡</div>
+              <div className="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E94560" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/><line x1="10.88" y1="21.94" x2="15.46" y2="14"/></svg>
+              </div>
               <h3>A gente faz o match</h3>
               <p>Nosso time conecta seu perfil às vagas das empresas parceiras. Vagas aparecem no seu painel.</p>
             </div>
             <div className="step-card">
-              <div className="step-icon">🎯</div>
+              <div className="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E94560" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg>
+              </div>
               <h3>Entrevista marcada</h3>
               <p>Quando uma vaga combina, agendamos sua entrevista online em até 7 dias. Sem burocracia.</p>
             </div>
@@ -627,7 +634,7 @@ export default function Home() {
         <div className="container">
           <div className="foot-grid">
             <div>
-              <div className="logo"><div className="logo-mark">V</div>VagaCerta</div>
+              <div className="logo"><LogoMark size={32} />VagaCerta</div>
               <p className="foot-about">A maior agenciadora de empregos home office do Brasil.</p>
             </div>
             <div className="foot-cols">
