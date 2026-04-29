@@ -1,17 +1,14 @@
 'use client';
 
 import { useState, FormEvent, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { EMPRESAS_BR, AREAS_INTERESSE, ESCOLARIDADE, TURNOS, DISPONIBILIDADE, SEXO } from '@/lib/constantes';
 
 type Experiencia = {
-  empresa: string;
-  cargo: string;
-  ano_inicio: string;
-  mes_inicio: string;
-  ano_fim: string;
-  mes_fim: string;
-  atual: boolean;
-  resumo: string;
+  empresa: string; cargo: string;
+  ano_inicio: string; mes_inicio: string;
+  ano_fim: string; mes_fim: string;
+  atual: boolean; resumo: string;
 };
 
 const FAIXAS_SALARIAIS = [
@@ -32,6 +29,7 @@ const MESES = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const totalSteps = 5;
   const [submitting, setSubmitting] = useState(false);
@@ -39,24 +37,18 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [cepLoading, setCepLoading] = useState(false);
   const formCardRef = useRef<HTMLDivElement>(null);
+  const [semExperiencia, setSemExperiencia] = useState(false);
+  const [showSenha, setShowSenha] = useState(false);
 
   const [form, setForm] = useState({
-    nome: '',
-    email: '',
-    whatsapp: '',
-    data_nascimento: '',
-    sexo: '',
-    cep: '',
-    cidade: '',
-    estado: '',
-    escolaridade: '',
-    areas_interesse: [] as string[],
-    disponibilidade: '',
-    turno: '',
-    salario: '',
+    nome: '', email: '', whatsapp: '',
+    data_nascimento: '', sexo: '',
+    cep: '', cidade: '', estado: '',
+    escolaridade: '', areas_interesse: [] as string[],
+    disponibilidade: '', turno: '', salario: '',
     experiencias: [] as Experiencia[],
-    bio: '',
-    linkedin: '',
+    bio: '', linkedin: '',
+    senha: '', senha_confirma: '',
   });
 
   const [expAtual, setExpAtual] = useState<Experiencia>({
@@ -66,7 +58,6 @@ export default function Home() {
 
   const update = (k: string, v: any) => setForm(p => ({ ...p, [k]: v }));
 
-  // Auto-scroll para o topo do form-card ao mudar de etapa
   useEffect(() => {
     if (step > 1 && formCardRef.current) {
       const headerOffset = 90;
@@ -181,16 +172,16 @@ export default function Home() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.bio) { setError('Conte um pouco sobre você'); return; }
+    if (!form.senha || form.senha.length < 6) { setError('Crie uma senha de no mínimo 6 caracteres'); return; }
+    if (form.senha !== form.senha_confirma) { setError('As senhas não coincidem'); return; }
+
     setSubmitting(true); setError(null);
     try {
-      // Converter experiências pro formato antigo da API (inicio/fim como string)
       const expsFormatted = form.experiencias.map(e => ({
-        empresa: e.empresa,
-        cargo: e.cargo,
+        empresa: e.empresa, cargo: e.cargo,
         inicio: e.ano_inicio && e.mes_inicio ? `${e.ano_inicio}-${e.mes_inicio}` : e.ano_inicio,
         fim: e.atual ? '' : (e.ano_fim && e.mes_fim ? `${e.ano_fim}-${e.mes_fim}` : e.ano_fim || ''),
-        atual: e.atual,
-        resumo: e.resumo,
+        atual: e.atual, resumo: e.resumo,
       }));
       const payload = { ...form, experiencias: expsFormatted };
 
@@ -206,6 +197,8 @@ export default function Home() {
         return;
       }
       setSuccess(true);
+      // Redireciona pro painel após 3s
+      setTimeout(() => router.push('/painel'), 3000);
     } catch {
       setError('Erro de conexão. Tente novamente.');
       setSubmitting(false);
@@ -223,7 +216,7 @@ export default function Home() {
           <div className="nav-links">
             <a href="#como-funciona">Como funciona</a>
             <a href="#areas">Áreas</a>
-            <a href="#depoimentos">Histórias</a>
+            <a href="/login">Entrar</a>
             <a href="#cadastro" className="btn-nav">Cadastre-se grátis</a>
           </div>
         </div>
@@ -267,7 +260,7 @@ export default function Home() {
               <div className="form-success">
                 <div className="check">✓</div>
                 <h3>Perfil cadastrado!</h3>
-                <p>Em breve você receberá vagas no seu WhatsApp e e-mail.<br/>Entrevistas em até 7 dias.</p>
+                <p>Te levando ao seu painel...<br/>Lá você acompanha as vagas que vamos te enviar.</p>
               </div>
             ) : (
               <form onSubmit={submit}>
@@ -315,16 +308,11 @@ export default function Home() {
                     <div className="step-label">Etapa 2 de 5 · Onde você mora</div>
                     <div className="field">
                       <label>CEP</label>
-                      <input
-                        type="text"
-                        value={form.cep}
-                        onChange={e => {
-                          const v = formatCEP(e.target.value);
-                          update('cep', v);
-                          if (v.replace(/\D/g, '').length === 8) buscarCEP(v);
-                        }}
-                        placeholder="00000-000"
-                      />
+                      <input type="text" value={form.cep} onChange={e => {
+                        const v = formatCEP(e.target.value);
+                        update('cep', v);
+                        if (v.replace(/\D/g, '').length === 8) buscarCEP(v);
+                      }} placeholder="00000-000" />
                       {cepLoading && <div className="hint">Buscando endereço...</div>}
                     </div>
                     <div className="field-row">
@@ -362,12 +350,9 @@ export default function Home() {
                       <label>Áreas de interesse <span className="hint-inline">(selecione quantas quiser)</span></label>
                       <div className="chips-grid">
                         {AREAS_INTERESSE.map(a => (
-                          <button
-                            type="button"
-                            key={a}
+                          <button type="button" key={a}
                             className={`chip-toggle ${form.areas_interesse.includes(a) ? 'active' : ''}`}
-                            onClick={() => toggleArea(a)}
-                          >
+                            onClick={() => toggleArea(a)}>
                             {a}
                           </button>
                         ))}
@@ -393,12 +378,9 @@ export default function Home() {
                       <label>Pretensão salarial</label>
                       <div className="chips-grid">
                         {FAIXAS_SALARIAIS.map(f => (
-                          <button
-                            type="button"
-                            key={f}
+                          <button type="button" key={f}
                             className={`chip-toggle ${form.salario === f ? 'active' : ''}`}
-                            onClick={() => update('salario', f)}
-                          >
+                            onClick={() => update('salario', f)}>
                             {f}
                           </button>
                         ))}
@@ -417,112 +399,115 @@ export default function Home() {
 
                 {step === 4 && (
                   <div className="form-step active">
-                    <div className="step-label">Etapa 4 de 5 · Experiências profissionais <span className="hint-inline">(opcional)</span></div>
+                    <div className="step-label">Etapa 4 de 5 · Experiências profissionais</div>
 
-                    {form.experiencias.length > 0 && (
-                      <div className="exp-lista">
-                        {form.experiencias.map((exp, i) => (
-                          <div key={i} className="exp-item">
-                            <div>
-                              <strong>{exp.cargo}</strong> · {exp.empresa}
-                              <div className="exp-periodo">
-                                {exp.mes_inicio && `${exp.mes_inicio}/`}{exp.ano_inicio}
-                                {exp.atual ? ' — atual' : (exp.ano_fim ? ` — ${exp.mes_fim ? `${exp.mes_fim}/` : ''}${exp.ano_fim}` : '')}
+                    {/* Checkbox no topo */}
+                    <div className="checkbox-card" onClick={() => setSemExperiencia(!semExperiencia)}>
+                      <div className={`custom-checkbox ${semExperiencia ? 'checked' : ''}`}>
+                        {semExperiencia && '✓'}
+                      </div>
+                      <div className="checkbox-text">
+                        <strong>Não tenho experiência ou prefiro não preencher agora</strong>
+                        <span>Você pode adicionar depois no seu painel</span>
+                      </div>
+                    </div>
+
+                    {!semExperiencia && (
+                      <>
+                        {form.experiencias.length > 0 && (
+                          <div className="exp-lista">
+                            {form.experiencias.map((exp, i) => (
+                              <div key={i} className="exp-item">
+                                <div>
+                                  <strong>{exp.cargo}</strong> · {exp.empresa}
+                                  <div className="exp-periodo">
+                                    {exp.mes_inicio && `${exp.mes_inicio}/`}{exp.ano_inicio}
+                                    {exp.atual ? ' — atual' : (exp.ano_fim ? ` — ${exp.mes_fim ? `${exp.mes_fim}/` : ''}${exp.ano_fim}` : '')}
+                                  </div>
+                                  {exp.resumo && <div className="exp-resumo">{exp.resumo}</div>}
+                                </div>
+                                <button type="button" onClick={() => removerExperiencia(i)} className="btn-remove">×</button>
                               </div>
-                              {exp.resumo && <div className="exp-resumo">{exp.resumo}</div>}
-                            </div>
-                            <button type="button" onClick={() => removerExperiencia(i)} className="btn-remove">×</button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="exp-add">
-                      <div className="exp-add-title">
-                        {form.experiencias.length > 0 ? 'Adicionar mais uma' : 'Sua experiência mais recente'}
-                      </div>
-                      <div className="field" style={{ position: 'relative' }}>
-                        <label>Empresa</label>
-                        <input
-                          type="text"
-                          value={expAtual.empresa}
-                          onChange={e => handleEmpresaInput(e.target.value)}
-                          placeholder="Comece a digitar o nome..."
-                          autoComplete="off"
-                        />
-                        {empresaSugestoes.length > 0 && (
-                          <div className="autocomplete-list">
-                            {empresaSugestoes.map(s => (
-                              <div key={s} className="autocomplete-item" onClick={() => {
-                                setExpAtual(p => ({ ...p, empresa: s }));
-                                setEmpresaSugestoes([]);
-                              }}>{s}</div>
                             ))}
                           </div>
                         )}
-                      </div>
-                      <div className="field">
-                        <label>Cargo</label>
-                        <input type="text" value={expAtual.cargo} onChange={e => setExpAtual(p => ({ ...p, cargo: e.target.value }))} placeholder="Ex: Atendente, Vendedor, Designer" />
-                      </div>
 
-                      <div className="field">
-                        <label>Início</label>
-                        <div className="field-row">
-                          <select value={expAtual.mes_inicio} onChange={e => setExpAtual(p => ({ ...p, mes_inicio: e.target.value }))}>
-                            <option value="">Mês</option>
-                            {MESES.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
-                          </select>
-                          <select value={expAtual.ano_inicio} onChange={e => setExpAtual(p => ({ ...p, ano_inicio: e.target.value }))}>
-                            <option value="">Ano</option>
-                            {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="field" style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14 }}>
-                        <input
-                          type="checkbox"
-                          checked={expAtual.atual}
-                          onChange={e => setExpAtual(p => ({ ...p, atual: e.target.checked, ano_fim: e.target.checked ? '' : p.ano_fim, mes_fim: e.target.checked ? '' : p.mes_fim }))}
-                          style={{ width: 'auto' }}
-                          id="exp-atual"
-                        />
-                        <label htmlFor="exp-atual" style={{ margin: 0, textTransform: 'none', letterSpacing: 0, fontSize: 14, color: 'var(--ink)', fontWeight: 500, cursor: 'pointer' }}>
-                          Estou trabalhando aqui atualmente
-                        </label>
-                      </div>
-
-                      {!expAtual.atual && (
-                        <div className="field">
-                          <label>Fim</label>
-                          <div className="field-row">
-                            <select value={expAtual.mes_fim} onChange={e => setExpAtual(p => ({ ...p, mes_fim: e.target.value }))}>
-                              <option value="">Mês</option>
-                              {MESES.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
-                            </select>
-                            <select value={expAtual.ano_fim} onChange={e => setExpAtual(p => ({ ...p, ano_fim: e.target.value }))}>
-                              <option value="">Ano</option>
-                              {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
-                            </select>
+                        <div className="exp-add">
+                          <div className="exp-add-title">
+                            {form.experiencias.length > 0 ? '+ Adicionar mais uma' : 'Sua experiência mais recente'}
                           </div>
+                          <div className="field" style={{ position: 'relative' }}>
+                            <label>Empresa</label>
+                            <input type="text" value={expAtual.empresa}
+                              onChange={e => handleEmpresaInput(e.target.value)}
+                              placeholder="Comece a digitar o nome..." autoComplete="off" />
+                            {empresaSugestoes.length > 0 && (
+                              <div className="autocomplete-list">
+                                {empresaSugestoes.map(s => (
+                                  <div key={s} className="autocomplete-item" onClick={() => {
+                                    setExpAtual(p => ({ ...p, empresa: s }));
+                                    setEmpresaSugestoes([]);
+                                  }}>{s}</div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="field">
+                            <label>Cargo</label>
+                            <input type="text" value={expAtual.cargo} onChange={e => setExpAtual(p => ({ ...p, cargo: e.target.value }))} placeholder="Ex: Atendente, Vendedor, Designer" />
+                          </div>
+                          <div className="field">
+                            <label>Início</label>
+                            <div className="field-row">
+                              <select value={expAtual.mes_inicio} onChange={e => setExpAtual(p => ({ ...p, mes_inicio: e.target.value }))}>
+                                <option value="">Mês</option>
+                                {MESES.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
+                              </select>
+                              <select value={expAtual.ano_inicio} onChange={e => setExpAtual(p => ({ ...p, ano_inicio: e.target.value }))}>
+                                <option value="">Ano</option>
+                                {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                          <div className="field" style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14 }}>
+                            <input type="checkbox" checked={expAtual.atual}
+                              onChange={e => setExpAtual(p => ({ ...p, atual: e.target.checked, ano_fim: e.target.checked ? '' : p.ano_fim, mes_fim: e.target.checked ? '' : p.mes_fim }))}
+                              style={{ width: 'auto' }} id="exp-atual" />
+                            <label htmlFor="exp-atual" style={{ margin: 0, textTransform: 'none', letterSpacing: 0, fontSize: 14, color: 'var(--ink)', fontWeight: 500, cursor: 'pointer' }}>
+                              Estou trabalhando aqui atualmente
+                            </label>
+                          </div>
+                          {!expAtual.atual && (
+                            <div className="field">
+                              <label>Fim</label>
+                              <div className="field-row">
+                                <select value={expAtual.mes_fim} onChange={e => setExpAtual(p => ({ ...p, mes_fim: e.target.value }))}>
+                                  <option value="">Mês</option>
+                                  {MESES.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
+                                </select>
+                                <select value={expAtual.ano_fim} onChange={e => setExpAtual(p => ({ ...p, ano_fim: e.target.value }))}>
+                                  <option value="">Ano</option>
+                                  {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                          )}
+                          <div className="field">
+                            <label>Resumo das atividades</label>
+                            <textarea rows={2} value={expAtual.resumo} onChange={e => setExpAtual(p => ({ ...p, resumo: e.target.value }))} placeholder="O que você fazia nesse cargo?" />
+                          </div>
+                          <button type="button" className="btn-add-exp" onClick={adicionarExperiencia}>
+                            + Adicionar mais experiência profissional
+                          </button>
                         </div>
-                      )}
-
-                      <div className="field">
-                        <label>Resumo das atividades</label>
-                        <textarea rows={2} value={expAtual.resumo} onChange={e => setExpAtual(p => ({ ...p, resumo: e.target.value }))} placeholder="O que você fazia nesse cargo?" />
-                      </div>
-                      <button type="button" className="btn-add-exp" onClick={adicionarExperiencia}>
-                        + Adicionar mais experiência profissional
-                      </button>
-                    </div>
+                      </>
+                    )}
 
                     {error && <div className="form-error">{error}</div>}
                     <div className="form-actions">
                       <button type="button" className="btn-form-back" onClick={prev}>← Voltar</button>
                       <button type="button" className="btn-form-next" onClick={next}>
-                        {form.experiencias.length === 0 ? 'Pular essa etapa →' : 'Continuar'}
+                        Continuar →
                       </button>
                     </div>
                   </div>
@@ -530,20 +515,39 @@ export default function Home() {
 
                 {step === 5 && (
                   <div className="form-step active">
-                    <div className="step-label">Etapa 5 de 5 · Finalizando</div>
+                    <div className="step-label">Etapa 5 de 5 · Quase lá</div>
                     <div className="field">
                       <label>Conte um pouco sobre você</label>
-                      <textarea rows={4} value={form.bio} onChange={e => update('bio', e.target.value)} placeholder="Suas habilidades, idiomas, software que domina..." />
+                      <textarea rows={3} value={form.bio} onChange={e => update('bio', e.target.value)} placeholder="Suas habilidades, idiomas, software que domina..." />
                     </div>
                     <div className="field">
                       <label>LinkedIn (opcional)</label>
                       <input type="url" value={form.linkedin} onChange={e => update('linkedin', e.target.value)} placeholder="https://linkedin.com/in/seuperfil" />
                     </div>
+
+                    <div className="senha-card">
+                      <div className="senha-card-title">🔐 Crie sua senha de acesso</div>
+                      <div className="senha-card-sub">Você vai usar pra entrar no seu painel e ver as vagas que enviamos.</div>
+                      <div className="field">
+                        <label>Senha</label>
+                        <div style={{ position: 'relative' }}>
+                          <input type={showSenha ? 'text' : 'password'} value={form.senha} onChange={e => update('senha', e.target.value)} placeholder="Mínimo 6 caracteres" />
+                          <button type="button" onClick={() => setShowSenha(!showSenha)} className="toggle-senha">
+                            {showSenha ? '🙈' : '👁️'}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="field">
+                        <label>Confirmar senha</label>
+                        <input type={showSenha ? 'text' : 'password'} value={form.senha_confirma} onChange={e => update('senha_confirma', e.target.value)} placeholder="Digite a senha novamente" />
+                      </div>
+                    </div>
+
                     {error && <div className="form-error">{error}</div>}
                     <div className="form-actions">
                       <button type="button" className="btn-form-back" onClick={prev}>← Voltar</button>
                       <button type="submit" className="btn-form-submit" disabled={submitting}>
-                        {submitting ? 'Enviando...' : 'Cadastrar perfil ✓'}
+                        {submitting ? 'Enviando...' : 'Cadastrar e entrar ✓'}
                       </button>
                     </div>
                   </div>
@@ -575,7 +579,7 @@ export default function Home() {
             <div className="step-card">
               <div className="step-icon">📡</div>
               <h3>A gente faz o match</h3>
-              <p>Nosso time conecta seu perfil às vagas das empresas parceiras. Você recebe oportunidades via WhatsApp e e-mail.</p>
+              <p>Nosso time conecta seu perfil às vagas das empresas parceiras. Vagas aparecem no seu painel.</p>
             </div>
             <div className="step-card">
               <div className="step-icon">🎯</div>
@@ -608,31 +612,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section" id="depoimentos">
-        <div className="container">
-          <div className="section-eyebrow">// HISTÓRIAS REAIS</div>
-          <h2 className="section-title">Quem já está <span className="it">trabalhando de casa</span>.</h2>
-          <p className="section-sub">Mais de 12 mil brasileiros mudaram a rotina com a gente. Esses são alguns deles.</p>
-          <div className="testimonials">
-            <div className="testimonial">
-              <div className="stars">★★★★★</div>
-              <blockquote>Em 5 dias depois do cadastro já tinha entrevista marcada. Hoje trabalho como SDR pra uma empresa de SaaS — <span className="it">e nunca mais voltei pro escritório</span>.</blockquote>
-              <div className="person"><div className="avatar">J</div><div><div className="name">Juliana M.</div><div className="role">SDR · Recife, PE</div></div></div>
-            </div>
-            <div className="testimonial featured">
-              <div className="stars">★★★★★</div>
-              <blockquote>Tava desempregada há 8 meses. Cadastrei na VagaCerta de manhã e à tarde já tinha 3 vagas no zap. <span className="it">Salvou minha vida.</span></blockquote>
-              <div className="person"><div className="avatar">C</div><div><div className="name">Camila R.</div><div className="role">Atendimento · Salvador, BA</div></div></div>
-            </div>
-            <div className="testimonial">
-              <div className="stars">★★★★★</div>
-              <blockquote>O que mais gostei foi não pagar nada. Outras plataformas cobravam até pra ver o salário. Aqui é tudo direto e <span className="it">100% gratuito</span> pro candidato.</blockquote>
-              <div className="person"><div className="avatar">R</div><div><div className="name">Rafael T.</div><div className="role">Dev Front-end · Curitiba, PR</div></div></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="final-cta">
         <div className="container">
           <h2>Sua próxima vaga<br/>pode chegar <span className="it">hoje</span>.</h2>
@@ -649,16 +628,16 @@ export default function Home() {
           <div className="foot-grid">
             <div>
               <div className="logo"><div className="logo-mark">V</div>VagaCerta</div>
-              <p className="foot-about">A maior agenciadora de empregos home office do Brasil. Conectamos talentos a empresas que contratam à distância.</p>
+              <p className="foot-about">A maior agenciadora de empregos home office do Brasil.</p>
             </div>
             <div className="foot-cols">
-              <div className="foot-col"><h4>Para candidatos</h4><a href="#cadastro">Cadastrar perfil</a><a href="#como-funciona">Como funciona</a><a href="#areas">Áreas com vagas</a></div>
-              <div className="foot-col"><h4>Para empresas</h4><a href="#">Anunciar vaga</a><a href="#">Planos</a><a href="#">Contato comercial</a></div>
-              <div className="foot-col"><h4>Empresa</h4><a href="#">Sobre nós</a><a href="#">Termos de uso</a><a href="#">Privacidade</a></div>
+              <div className="foot-col"><h4>Para candidatos</h4><a href="#cadastro">Cadastrar perfil</a><a href="/login">Entrar no painel</a><a href="#como-funciona">Como funciona</a></div>
+              <div className="foot-col"><h4>Para empresas</h4><a href="#">Anunciar vaga</a><a href="#">Contato comercial</a></div>
+              <div className="foot-col"><h4>Empresa</h4><a href="#">Sobre nós</a><a href="#">Termos</a></div>
             </div>
           </div>
           <div className="foot-bottom">
-            <span>© 2026 VagaCerta. Todos os direitos reservados.</span>
+            <span>© 2026 VagaCerta.</span>
             <span>Feito com 💚 no Brasil</span>
           </div>
         </div>

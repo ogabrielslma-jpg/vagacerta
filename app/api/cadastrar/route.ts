@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { generateToken } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
 
 export const runtime = 'nodejs';
 
@@ -18,7 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const required = ['nome', 'email', 'whatsapp', 'data_nascimento', 'sexo', 'cep', 'cidade', 'estado', 'escolaridade', 'disponibilidade', 'turno', 'salario', 'bio'];
+    const required = ['nome', 'email', 'whatsapp', 'data_nascimento', 'sexo', 'cep', 'cidade', 'estado', 'escolaridade', 'disponibilidade', 'turno', 'salario', 'bio', 'senha'];
     for (const field of required) {
       if (!body[field] || String(body[field]).trim() === '') {
         return NextResponse.json({ error: `Campo obrigatório: ${field}` }, { status: 400 });
@@ -33,7 +35,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email inválido' }, { status: 400 });
     }
 
+    if (body.senha.length < 6) {
+      return NextResponse.json({ error: 'Senha deve ter ao menos 6 caracteres' }, { status: 400 });
+    }
+
     const idade = calcularIdade(body.data_nascimento);
+    const senha_hash = await bcrypt.hash(body.senha, 10);
 
     const { data, error } = await supabaseAdmin
       .from('cadastros')
@@ -58,6 +65,7 @@ export async function POST(req: NextRequest) {
         bio: body.bio.trim(),
         linkedin: body.linkedin?.trim() || null,
         status: 'novo',
+        senha_hash,
       })
       .select()
       .single();
@@ -65,12 +73,31 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error('Supabase error:', error);
       if (error.code === '23505') {
-        return NextResponse.json({ error: 'Este email já está cadastrado' }, { status: 409 });
+        return NextResponse.json({ error: 'Este email já está cadastrado. Faça login no painel.' }, { status: 409 });
       }
       return NextResponse.json({ error: 'Erro ao salvar cadastro' }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, id: data.id });
+    // Cria mensagem de boas-vindas
+    await supabaseAdmin.from('mensagens').insert({
+      cadastro_id: data.id,
+      titulo: 'Bem-vindo(a) à VagaCerta! 🎉',
+      corpo: `Olá ${data.nome.split(' ')[0]}! Seu perfil foi cadastrado com sucesso. A partir de agora, vamos te enviar vagas home office sob medida pra você. Fique de olho neste painel — entrevistas costumam ser marcadas em até 7 dias.`,
+      tipo: 'sistema',
+    });
+
+    // Gera token e retorna
+    const token = generateToken(data.id, data.email);
+
+    const res = NextResponse.json({ ok: true, id: data.id, token });
+    res.cookies.set('vc_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, // 30 dias
+      path: '/',
+    });
+    return res;
   } catch (err: any) {
     console.error('Cadastro error:', err);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
