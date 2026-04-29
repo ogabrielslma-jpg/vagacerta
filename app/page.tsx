@@ -1,16 +1,35 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useRef, useEffect } from 'react';
 import { EMPRESAS_BR, AREAS_INTERESSE, ESCOLARIDADE, TURNOS, DISPONIBILIDADE, SEXO } from '@/lib/constantes';
 
 type Experiencia = {
   empresa: string;
   cargo: string;
-  inicio: string;
-  fim: string;
+  ano_inicio: string;
+  mes_inicio: string;
+  ano_fim: string;
+  mes_fim: string;
   atual: boolean;
   resumo: string;
 };
+
+const FAIXAS_SALARIAIS = [
+  'Até R$ 1.400',
+  'R$ 1.400 a R$ 3.000',
+  'R$ 3.000 a R$ 5.000',
+  'Acima de R$ 5.000',
+  'A combinar',
+];
+
+const ANO_ATUAL = new Date().getFullYear();
+const ANOS = Array.from({ length: 50 }, (_, i) => String(ANO_ATUAL - i));
+const MESES = [
+  { v: '01', l: 'Janeiro' }, { v: '02', l: 'Fevereiro' }, { v: '03', l: 'Março' },
+  { v: '04', l: 'Abril' }, { v: '05', l: 'Maio' }, { v: '06', l: 'Junho' },
+  { v: '07', l: 'Julho' }, { v: '08', l: 'Agosto' }, { v: '09', l: 'Setembro' },
+  { v: '10', l: 'Outubro' }, { v: '11', l: 'Novembro' }, { v: '12', l: 'Dezembro' },
+];
 
 export default function Home() {
   const [step, setStep] = useState(1);
@@ -19,6 +38,7 @@ export default function Home() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cepLoading, setCepLoading] = useState(false);
+  const formCardRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState({
     nome: '',
@@ -39,15 +59,23 @@ export default function Home() {
     linkedin: '',
   });
 
-  // Experiência sendo digitada agora
   const [expAtual, setExpAtual] = useState<Experiencia>({
-    empresa: '', cargo: '', inicio: '', fim: '', atual: false, resumo: ''
+    empresa: '', cargo: '', ano_inicio: '', mes_inicio: '', ano_fim: '', mes_fim: '', atual: false, resumo: ''
   });
   const [empresaSugestoes, setEmpresaSugestoes] = useState<string[]>([]);
 
   const update = (k: string, v: any) => setForm(p => ({ ...p, [k]: v }));
 
-  // Idade calculada em tempo real
+  // Auto-scroll para o topo do form-card ao mudar de etapa
+  useEffect(() => {
+    if (step > 1 && formCardRef.current) {
+      const headerOffset = 90;
+      const elementPosition = formCardRef.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    }
+  }, [step]);
+
   const idadeCalculada = (() => {
     if (!form.data_nascimento) return null;
     const nasc = new Date(form.data_nascimento);
@@ -72,7 +100,6 @@ export default function Home() {
     return n;
   };
 
-  // Busca CEP via ViaCEP
   const buscarCEP = async (cep: string) => {
     const cleanCep = cep.replace(/\D/g, '');
     if (cleanCep.length !== 8) return;
@@ -84,20 +111,14 @@ export default function Home() {
         update('cidade', data.localidade || '');
         update('estado', data.uf || '');
       }
-    } catch (e) {
-      // silencia, deixa pessoa preencher manual
-    } finally {
-      setCepLoading(false);
-    }
+    } catch {} finally { setCepLoading(false); }
   };
 
   const handleEmpresaInput = (v: string) => {
     setExpAtual(p => ({ ...p, empresa: v }));
     if (v.length >= 2) {
       const lower = v.toLowerCase();
-      setEmpresaSugestoes(
-        EMPRESAS_BR.filter(e => e.toLowerCase().includes(lower)).slice(0, 6)
-      );
+      setEmpresaSugestoes(EMPRESAS_BR.filter(e => e.toLowerCase().includes(lower)).slice(0, 6));
     } else {
       setEmpresaSugestoes([]);
     }
@@ -113,12 +134,12 @@ export default function Home() {
   };
 
   const adicionarExperiencia = () => {
-    if (!expAtual.empresa || !expAtual.cargo || !expAtual.inicio) {
-      setError('Preencha empresa, cargo e início para adicionar a experiência');
+    if (!expAtual.empresa || !expAtual.cargo || !expAtual.ano_inicio) {
+      setError('Preencha empresa, cargo e ano de início');
       return;
     }
     setForm(p => ({ ...p, experiencias: [...p.experiencias, expAtual] }));
-    setExpAtual({ empresa: '', cargo: '', inicio: '', fim: '', atual: false, resumo: '' });
+    setExpAtual({ empresa: '', cargo: '', ano_inicio: '', mes_inicio: '', ano_fim: '', mes_fim: '', atual: false, resumo: '' });
     setEmpresaSugestoes([]);
     setError(null);
   };
@@ -162,10 +183,21 @@ export default function Home() {
     if (!form.bio) { setError('Conte um pouco sobre você'); return; }
     setSubmitting(true); setError(null);
     try {
+      // Converter experiências pro formato antigo da API (inicio/fim como string)
+      const expsFormatted = form.experiencias.map(e => ({
+        empresa: e.empresa,
+        cargo: e.cargo,
+        inicio: e.ano_inicio && e.mes_inicio ? `${e.ano_inicio}-${e.mes_inicio}` : e.ano_inicio,
+        fim: e.atual ? '' : (e.ano_fim && e.mes_fim ? `${e.ano_fim}-${e.mes_fim}` : e.ano_fim || ''),
+        atual: e.atual,
+        resumo: e.resumo,
+      }));
+      const payload = { ...form, experiencias: expsFormatted };
+
       const res = await fetch('/api/cadastrar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -221,8 +253,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* FORMULÁRIO MULTI-STEP */}
-          <div id="cadastro" className="form-card">
+          <div id="cadastro" className="form-card" ref={formCardRef}>
             <div className="form-title">Crie seu <span className="it">perfil</span></div>
             <div className="form-sub">{totalSteps} etapas rápidas. Não cobramos nada do candidato.</div>
 
@@ -240,7 +271,6 @@ export default function Home() {
               </div>
             ) : (
               <form onSubmit={submit}>
-                {/* ETAPA 1 — DADOS PESSOAIS */}
                 {step === 1 && (
                   <div className="form-step active">
                     <div className="step-label">Etapa 1 de 5 · Dados pessoais</div>
@@ -280,7 +310,6 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* ETAPA 2 — ENDEREÇO */}
                 {step === 2 && (
                   <div className="form-step active">
                     <div className="step-label">Etapa 2 de 5 · Onde você mora</div>
@@ -319,7 +348,6 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* ETAPA 3 — FORMAÇÃO E PREFERÊNCIAS */}
                 {step === 3 && (
                   <div className="form-step active">
                     <div className="step-label">Etapa 3 de 5 · Formação e preferências</div>
@@ -362,8 +390,19 @@ export default function Home() {
                       </div>
                     </div>
                     <div className="field">
-                      <label>Pretensão salarial (R$)</label>
-                      <input type="text" value={form.salario} onChange={e => update('salario', e.target.value)} placeholder="Ex: 2.500" />
+                      <label>Pretensão salarial</label>
+                      <div className="chips-grid">
+                        {FAIXAS_SALARIAIS.map(f => (
+                          <button
+                            type="button"
+                            key={f}
+                            className={`chip-toggle ${form.salario === f ? 'active' : ''}`}
+                            onClick={() => update('salario', f)}
+                          >
+                            {f}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     {error && <div className="form-error">{error}</div>}
                     <div className="form-actions">
@@ -376,19 +415,20 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* ETAPA 4 — EXPERIÊNCIAS */}
                 {step === 4 && (
                   <div className="form-step active">
                     <div className="step-label">Etapa 4 de 5 · Experiências profissionais <span className="hint-inline">(opcional)</span></div>
 
-                    {/* Lista de experiências já adicionadas */}
                     {form.experiencias.length > 0 && (
                       <div className="exp-lista">
                         {form.experiencias.map((exp, i) => (
                           <div key={i} className="exp-item">
                             <div>
                               <strong>{exp.cargo}</strong> · {exp.empresa}
-                              <div className="exp-periodo">{exp.inicio} {exp.fim ? `- ${exp.fim}` : (exp.atual ? '- atual' : '')}</div>
+                              <div className="exp-periodo">
+                                {exp.mes_inicio && `${exp.mes_inicio}/`}{exp.ano_inicio}
+                                {exp.atual ? ' — atual' : (exp.ano_fim ? ` — ${exp.mes_fim ? `${exp.mes_fim}/` : ''}${exp.ano_fim}` : '')}
+                              </div>
                               {exp.resumo && <div className="exp-resumo">{exp.resumo}</div>}
                             </div>
                             <button type="button" onClick={() => removerExperiencia(i)} className="btn-remove">×</button>
@@ -397,8 +437,10 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Form de adicionar experiência */}
                     <div className="exp-add">
+                      <div className="exp-add-title">
+                        {form.experiencias.length > 0 ? 'Adicionar mais uma' : 'Sua experiência mais recente'}
+                      </div>
                       <div className="field" style={{ position: 'relative' }}>
                         <label>Empresa</label>
                         <input
@@ -421,41 +463,58 @@ export default function Home() {
                       </div>
                       <div className="field">
                         <label>Cargo</label>
-                        <input type="text" value={expAtual.cargo} onChange={e => setExpAtual(p => ({ ...p, cargo: e.target.value }))} placeholder="Ex: Atendente" />
+                        <input type="text" value={expAtual.cargo} onChange={e => setExpAtual(p => ({ ...p, cargo: e.target.value }))} placeholder="Ex: Atendente, Vendedor, Designer" />
                       </div>
-                      <div className="field-row">
-                        <div className="field">
-                          <label>Início (mês/ano)</label>
-                          <input type="month" value={expAtual.inicio} onChange={e => setExpAtual(p => ({ ...p, inicio: e.target.value }))} />
-                        </div>
-                        <div className="field">
-                          <label>Fim (mês/ano)</label>
-                          <input
-                            type="month"
-                            value={expAtual.fim}
-                            onChange={e => setExpAtual(p => ({ ...p, fim: e.target.value, atual: false }))}
-                            disabled={expAtual.atual}
-                          />
+
+                      <div className="field">
+                        <label>Início</label>
+                        <div className="field-row">
+                          <select value={expAtual.mes_inicio} onChange={e => setExpAtual(p => ({ ...p, mes_inicio: e.target.value }))}>
+                            <option value="">Mês</option>
+                            {MESES.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
+                          </select>
+                          <select value={expAtual.ano_inicio} onChange={e => setExpAtual(p => ({ ...p, ano_inicio: e.target.value }))}>
+                            <option value="">Ano</option>
+                            {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+                          </select>
                         </div>
                       </div>
-                      <div className="field" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+
+                      <div className="field" style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14 }}>
                         <input
                           type="checkbox"
                           checked={expAtual.atual}
-                          onChange={e => setExpAtual(p => ({ ...p, atual: e.target.checked, fim: e.target.checked ? '' : p.fim }))}
+                          onChange={e => setExpAtual(p => ({ ...p, atual: e.target.checked, ano_fim: e.target.checked ? '' : p.ano_fim, mes_fim: e.target.checked ? '' : p.mes_fim }))}
                           style={{ width: 'auto' }}
                           id="exp-atual"
                         />
-                        <label htmlFor="exp-atual" style={{ margin: 0, textTransform: 'none', letterSpacing: 0, fontSize: 13, color: 'var(--ink)', fontWeight: 500 }}>
-                          Trabalho atual
+                        <label htmlFor="exp-atual" style={{ margin: 0, textTransform: 'none', letterSpacing: 0, fontSize: 14, color: 'var(--ink)', fontWeight: 500, cursor: 'pointer' }}>
+                          Estou trabalhando aqui atualmente
                         </label>
                       </div>
+
+                      {!expAtual.atual && (
+                        <div className="field">
+                          <label>Fim</label>
+                          <div className="field-row">
+                            <select value={expAtual.mes_fim} onChange={e => setExpAtual(p => ({ ...p, mes_fim: e.target.value }))}>
+                              <option value="">Mês</option>
+                              {MESES.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
+                            </select>
+                            <select value={expAtual.ano_fim} onChange={e => setExpAtual(p => ({ ...p, ano_fim: e.target.value }))}>
+                              <option value="">Ano</option>
+                              {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="field">
                         <label>Resumo das atividades</label>
                         <textarea rows={2} value={expAtual.resumo} onChange={e => setExpAtual(p => ({ ...p, resumo: e.target.value }))} placeholder="O que você fazia nesse cargo?" />
                       </div>
                       <button type="button" className="btn-add-exp" onClick={adicionarExperiencia}>
-                        + Adicionar essa experiência
+                        + Adicionar mais experiência profissional
                       </button>
                     </div>
 
@@ -469,7 +528,6 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* ETAPA 5 — FINAL */}
                 {step === 5 && (
                   <div className="form-step active">
                     <div className="step-label">Etapa 5 de 5 · Finalizando</div>
