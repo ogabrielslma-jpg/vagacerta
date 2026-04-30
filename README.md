@@ -1,126 +1,106 @@
-# 🏦 DasBank — Guia de instalação
+# 🌍 DasBank — Conta Global (v2)
 
-Esse projeto substitui o VagaCerta no mesmo repo/Vercel/Supabase.
+Banco digital pra brasileiros (PF e PJ) receberem do mundo. Foco em conta multi-moeda + recebimento internacional.
 
-## 📋 Passo a passo
+## 📋 O que mudou da v1 pra v2
 
-### 1. Backup do VagaCerta (opcional)
-Se quiser preservar o VagaCerta antes de sobrescrever:
+- 🎨 **Nova identidade:** Preto + verde-menta neon (vibe fintech tech)
+- 🌍 **Novo posicionamento:** Conta global pra recebimento de +140 países
+- 💱 **Painel multi-moeda:** Tabs USD/EUR/GBP/BRL com saldos separados
+- 🏦 **Dados bancários internacionais:** Routing US, IBAN europeu, Sort code UK
+- 📊 **Comparativo de economia:** DasBank vs Wise vs banco tradicional
+- 👥 **4 personas:** Freelancer, Criador, E-commerce, Empresa
+- ⚡ **Cotações live:** Strip animada com USD/BRL, EUR/BRL etc no topo
+- 🌎 **Grid de países:** 16 países visíveis + bandeiras circulares no hero
+
+## 🚀 Como atualizar
+
+Se você já tem o DasBank v1 no ar, é só sobrescrever os arquivos:
+
+### 1. Apagar arquivos antigos
 ```bash
-cd ~/Documentos/vagacerta
-git checkout -b backup-vagacerta
-git push origin backup-vagacerta
-git checkout main
+cd ~/Downloads/vagacerta
+rm -rf app components
 ```
 
-### 2. Apagar arquivos antigos do VagaCerta
-```bash
-cd ~/Documentos/vagacerta
-rm -rf app components lib
-rm -f supabase-setup.sql supabase-migration-*.sql
-```
-
-### 3. Copiar arquivos novos do DasBank
-Descompacte o `dasbank-v1.zip` e copie tudo pra dentro da pasta:
+### 2. Copiar arquivos novos
 ```bash
 cp -R ~/Downloads/dasbank/* .
 ```
 
-### 4. Criar a tabela no Supabase
-- Abrir o projeto no Supabase
-- SQL Editor → New query
-- Colar o conteúdo de `supabase-setup.sql`
-- Run
-
-### 5. Subir pro Git
+### 3. Subir pro Git
 ```bash
 git add .
-git commit -m "transição: vagacerta → dasbank (banco digital demo)"
+git commit -m "v2: dasbank global - preto + menta + multi-moeda"
 git push
 ```
 
-### 6. Renomear projeto no Vercel (opcional)
-- vercel.com → seu projeto
-- Settings → General → Project Name
-- Mudar de `vagacerta` pra `dasbank`
-- Domain: passa a ser `dasbank-XXXX.vercel.app`
+Vercel faz redeploy automático em 1-3 min.
 
-As env vars do Vercel **continuam as mesmas** (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_PASSWORD, JWT_SECRET).
+⚠️ **Não precisa rodar SQL novamente** — a tabela `clientes` continua a mesma.
 
-## 🎯 Como apresentar pro seu conhecido
+## 🎬 Roteiro de apresentação atualizado
 
-### Roteiro sugerido (5 minutos):
+### 1. Landing global (1 min)
+- Mostra hero "Receba do mundo. Saque no Brasil."
+- Cotações live rolando embaixo
+- Bandeiras de 6 países + "+134"
+- Stats: 140+ países, 10x mais barato, 350k clientes
 
-**1. Abre a landing no celular ou notebook**
-- Mostra hero, seções "como funciona", benefícios, depoimentos
-- "Olha, o site explica tudo: PF e PJ, zero taxa, PIX ilimitado"
-
-**2. Faz o cadastro ao vivo**
-- Escolhe PF ou PJ
-- Preenche dados (use os seus, ou dados fake — qualquer CPF)
-- Sobe **qualquer foto** nos 4 campos de documento (qualquer JPG funciona — não validamos)
+### 2. Cadastro ao vivo (1 min)
+- PF ou PJ
+- Preenche dados (qualquer CPF/CNPJ)
+- Sobe 4 fotos quaisquer nos docs
 - Cria senha
-- "Pronto, conta criada — agora cai numa tela de 'em análise'"
 
-**3. Mostra o painel logado**
-- "Olha como já tá com aviso de 'em análise'"
-- Cartão virtual visível, saldo zerado, extrato vazio
-- "Quando o banco aprovar, esses campos enchem"
+### 3. Painel multi-moeda (2 min) — **DESTAQUE**
+- Tabs BRL / USD / EUR / GBP no topo (cada uma com saldo próprio)
+- Clica em USD: saldo $2.147,85 + dados bancários americanos (Wells Fargo)
+- Clica em EUR: saldo €850 + IBAN belga
+- Extrato mostra recebimentos com bandeiras: Acme Inc (USA), YouTube AdSense, cliente UK, cliente alemão
+- Cartão internacional virtual
 
-**4. Abre outra aba — painel admin**
-- `dasbank-XXXX.vercel.app/admin`
-- Senha admin
-- "Aqui é quem opera o banco. Olha — tem o cadastro que eu acabei de fazer"
-- Clica no cadastro → modal abre com todos os dados + 4 fotos de docs
-- Clica em **"✓ Aprovar conta"**
+### 4. Admin aprovando (1 min)
+- `/admin` → senha admin
+- Modal completo com docs
+- Clica Aprovar → conta vira "verificada"
+- Volta no painel: agora todos os saldos aparecem populados
 
-**5. Volta no painel do cliente e dá refresh**
-- "Agora a conta tá aprovada — saldo de R$ 1.247,85, transações fakes apareceram, cartão liberado"
-- Clica em PIX/Transferir/Investir → modal "em desenvolvimento"
-- "A interface tá toda pronta. Faltam as integrações reais"
+## 🎨 Identidade visual v2
 
-## ⚠️ Avisos importantes
-
-1. **Deixa claro que é demo.** "É um protótipo navegável pra mostrar a UX. A parte regulatória (BC, BaaS) é fase posterior."
-
-2. **Não é banco de verdade.** Avise que pra operar de verdade precisa de: licença BC, parceria com BaaS (Pagar.me, Bankly, Dock, Belvo, etc), AML/KYC real, etc.
-
-3. **Custos reais pra virar produto:**
-   - BaaS: a partir de R$ 5k/mês
-   - DPO + Compliance: R$ 10-20k/mês
-   - Time mínimo: 5-8 pessoas (devs, design, ops)
-   - MVP real: 4-6 meses + R$ 200-500k
-
-## 🎨 Customização rápida
-
-Se ele topar e quiser uma versão personalizada:
-
-### Trocar nome
-- Buscar e substituir "DasBank" → "NovoBanco" em todos os arquivos
-- Trocar `Das<span>Bank</span>` no `Logo.tsx` e na page.tsx
-
-### Trocar cores
-Edite `app/globals.css` linhas 3-12:
-```css
---teal-deep: #0B3D3A;   /* fundo escuro */
---mint: #00D4A0;        /* cor de acento */
+```
+--black: #0A0A0A          (fundo principal)
+--black-soft: #121212     (fundo secundário)
+--black-elevated: #1A1A1A (cards)
+--mint: #00FFB3           (cor de acento)
+--mint-bright: #1AFFB8    (hover)
+--mint-glow: rgba(0, 255, 179, 0.4)  (glow effect)
 ```
 
-### Trocar logo
-Edite `components/Logo.tsx` — substitua o SVG pelo logo do banco.
+**Tipografia:** Inter (regular) + JetBrains Mono (cotações, dados técnicos)
 
 ## 📂 Estrutura
 
 ```
 dasbank/
 ├── app/
-│   ├── page.tsx              landing + form
-│   ├── login/page.tsx
-│   ├── painel/page.tsx       dashboard logado
+│   ├── page.tsx              landing global + form
+│   ├── login/page.tsx        login dark
+│   ├── painel/page.tsx       dashboard multi-moeda
 │   ├── admin/page.tsx        painel banco
 │   ├── sucesso/page.tsx      pós-cadastro
-│   └── api/                  rotas backend
-├── components/Logo.tsx
-├── lib/                      supabase + auth
-└── supabase-setup.sql
+│   ├── globals.css           tema preto + menta
+│   └── api/                  rotas backend (sem mudanças)
+├── components/Logo.tsx       logo "Das" + ponto verde
+├── lib/                      supabase + auth (sem mudanças)
+└── supabase-setup.sql        SQL (sem mudanças, já rodado)
 ```
+
+## ⚠️ Lembrete ético pra apresentação
+
+Quando apresentar pro cliente:
+- ✅ "É um protótipo navegável da UX/UI"
+- ✅ "A camada bancária real precisa de licença BC + parceria BaaS internacional (tipo Bankly + Currencycloud)"
+- ✅ "MVP real: 6-9 meses + R$ 300-800k de investimento"
+- ❌ Não diga que está pronto pra operar
+- ❌ Não copie marca de Wise, Nomad, Husky etc

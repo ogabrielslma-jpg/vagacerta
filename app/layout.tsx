@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'DasBank — O banco que trabalha do seu jeito',
-  description: 'Conta digital gratuita PF e PJ. Cartão sem anuidade, PIX ilimitado, e tudo que você precisa pra fazer seu dinheiro render. Abra sua conta em 5 minutos.',
+  title: 'DasBank — Conta global pra brasileiros que recebem do mundo',
+  description: 'Receba pagamentos de mais de 140 países direto na sua conta. USD, EUR, GBP, CAD e mais. Cartão sem IOF, câmbio comercial, suporte humano. Pra PF e PJ.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>

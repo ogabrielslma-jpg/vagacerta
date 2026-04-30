@@ -5,20 +5,36 @@ import { useRouter } from 'next/navigation';
 import { LogoMark } from '@/components/Logo';
 
 const TRANSACOES_FAKE = [
-  { id: 1, tipo: 'in', titulo: 'PIX recebido', sub: 'De Marina Costa · Hoje, 14:32', valor: 850.00 },
-  { id: 2, tipo: 'out', titulo: 'Cartão de crédito', sub: 'iFood · Ontem, 19:45', valor: 47.90 },
-  { id: 3, tipo: 'in', titulo: 'Rendimento da conta', sub: 'CDI · Ontem, 00:01', valor: 2.34 },
-  { id: 4, tipo: 'out', titulo: 'Pagamento de boleto', sub: 'Vivo · 26/04, 10:15', valor: 89.90 },
-  { id: 5, tipo: 'out', titulo: 'PIX enviado', sub: 'Para Posto Shell · 25/04, 18:20', valor: 120.00 },
+  { id: 1, tipo: 'in', titulo: 'Pagamento recebido', sub: 'De Acme Inc · Stripe · Hoje, 14:32', valor: 1250.00, moeda: 'USD', bandeira: '🇺🇸' },
+  { id: 2, tipo: 'in', titulo: 'YouTube AdSense', sub: 'Google LLC · Ontem, 09:15', valor: 487.30, moeda: 'USD', bandeira: '🇺🇸' },
+  { id: 3, tipo: 'in', titulo: 'Pagamento Upwork', sub: 'Cliente UK · 26/04, 18:45', valor: 320.00, moeda: 'GBP', bandeira: '🇬🇧' },
+  { id: 4, tipo: 'out', titulo: 'Cartão internacional', sub: 'Amazon Prime · 25/04', valor: 14.99, moeda: 'USD', bandeira: '🇺🇸' },
+  { id: 5, tipo: 'in', titulo: 'Cliente alemão', sub: 'Müller GmbH · SEPA · 24/04', valor: 850.00, moeda: 'EUR', bandeira: '🇪🇺' },
+  { id: 6, tipo: 'out', titulo: 'Conversão para BRL', sub: 'USD → BRL · 23/04', valor: 500.00, moeda: 'USD', bandeira: '🇺🇸' },
 ];
 
-const formatBRL = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const MOEDAS = [
+  { codigo: 'BRL', nome: 'Real', bandeira: '🇧🇷', simbolo: 'R$' },
+  { codigo: 'USD', nome: 'Dólar', bandeira: '🇺🇸', simbolo: '$' },
+  { codigo: 'EUR', nome: 'Euro', bandeira: '🇪🇺', simbolo: '€' },
+  { codigo: 'GBP', nome: 'Libra', bandeira: '🇬🇧', simbolo: '£' },
+];
+
+const SALDOS_POR_MOEDA = {
+  BRL: 4823.45,
+  USD: 2147.85,
+  EUR: 850.00,
+  GBP: 320.00,
+};
+
+const formatNum = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function Painel() {
   const router = useRouter();
   const [cliente, setCliente] = useState<any>(null);
   const [carregando, setCarregando] = useState(true);
   const [mostraSaldo, setMostraSaldo] = useState(true);
+  const [moedaSelecionada, setMoedaSelecionada] = useState('BRL');
   const [modalAcao, setModalAcao] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,8 +68,11 @@ export default function Painel() {
   const isPF = cliente.tipo_conta === 'PF';
   const nomePrimeiro = (isPF ? cliente.nome : cliente.responsavel || cliente.nome).split(' ')[0];
   const inicial = nomePrimeiro[0]?.toUpperCase() || '?';
-  const saldo = cliente.saldo || 0;
   const aprovado = cliente.status === 'aprovado';
+  const moedaAtual = MOEDAS.find(m => m.codigo === moedaSelecionada)!;
+  const saldoAtual = aprovado
+    ? (SALDOS_POR_MOEDA as any)[moedaSelecionada]
+    : 0;
 
   return (
     <div className="dash-shell">
@@ -61,7 +80,7 @@ export default function Painel() {
         <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
           <LogoMark size={32} />
           <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.025em', color: 'white' }}>
-            Das<span style={{ color: '#00D4A0' }}>Bank</span>
+            Das<span style={{ color: '#00FFB3' }}>Bank</span>
           </span>
         </a>
         <div className="dash-header-actions">
@@ -78,7 +97,7 @@ export default function Painel() {
       <main className="dash-main">
         {/* Status da conta */}
         {!aprovado && (
-          <div className="status-conta-card" style={{ background: 'rgba(245, 158, 11, 0.06)', borderColor: 'rgba(245, 158, 11, 0.2)' }}>
+          <div className="status-conta-card" style={{ background: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
             <div className="status-conta-icon" style={{ background: '#F59E0B', color: 'white' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -86,7 +105,7 @@ export default function Painel() {
             </div>
             <div className="status-conta-info">
               <div className="status-conta-titulo">Conta em análise</div>
-              <div className="status-conta-sub">Estamos verificando seus documentos. Em até 24h sua conta estará liberada.</div>
+              <div className="status-conta-sub">Estamos verificando seus documentos. Conta global liberada em até 24h.</div>
             </div>
           </div>
         )}
@@ -99,16 +118,31 @@ export default function Painel() {
               </svg>
             </div>
             <div className="status-conta-info">
-              <div className="status-conta-titulo">Conta verificada ✓</div>
-              <div className="status-conta-sub">Tudo certo! Sua conta está totalmente liberada.</div>
+              <div className="status-conta-titulo">Conta global verificada ✓</div>
+              <div className="status-conta-sub">Você pode receber de mais de 140 países. Saldo multi-moeda ativo.</div>
             </div>
           </div>
         )}
 
+        {/* Tabs de moeda */}
+        <div className="moeda-tabs">
+          {MOEDAS.map(m => (
+            <div
+              key={m.codigo}
+              className={`moeda-tab ${moedaSelecionada === m.codigo ? 'active' : ''}`}
+              onClick={() => setMoedaSelecionada(m.codigo)}
+            >
+              <span style={{ fontSize: 16 }}>{m.bandeira}</span>
+              <span className="codigo">{m.codigo}</span>
+              {aprovado && <span style={{ fontSize: 11, opacity: 0.7 }}>{m.simbolo} {formatNum((SALDOS_POR_MOEDA as any)[m.codigo])}</span>}
+            </div>
+          ))}
+        </div>
+
         {/* Saldo */}
         <div className="saldo-card">
           <div className="saldo-label">
-            Saldo disponível
+            Saldo em {moedaAtual.nome} ({moedaAtual.codigo})
             <button className="saldo-toggle" onClick={()=>setMostraSaldo(!mostraSaldo)}>
               {mostraSaldo ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -118,45 +152,54 @@ export default function Painel() {
             </button>
           </div>
           <div className="saldo-valor">
-            <span className="moeda">R$</span>
-            {mostraSaldo ? formatBRL(saldo) : '••••••'}
+            <span className="moeda">{moedaAtual.simbolo}</span>
+            {mostraSaldo ? formatNum(saldoAtual) : '••••••'}
           </div>
-          <div className="saldo-conta">
-            Agência <strong>{cliente.agencia}</strong> · Conta <strong>{cliente.numero_conta}</strong>
-          </div>
+          {aprovado && (
+            <div className="saldo-conta">
+              {moedaSelecionada === 'BRL' ? (
+                <>Agência <strong>{cliente.agencia}</strong> · Conta <strong>{cliente.numero_conta}</strong></>
+              ) : moedaSelecionada === 'USD' ? (
+                <>Routing <strong>084009519</strong> · Account <strong>9892****6451</strong> · Wells Fargo</>
+              ) : moedaSelecionada === 'EUR' ? (
+                <>IBAN <strong>BE63 9670 1234 5678</strong> · BIC <strong>TRWIBEB1XXX</strong></>
+              ) : (
+                <>Sort <strong>23-14-70</strong> · Account <strong>3140****87</strong> · Barclays</>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Quick actions */}
         <div className="quick-actions">
-          <div className="quick-action" onClick={()=>setModalAcao('PIX')}>
+          <div className="quick-action" onClick={()=>setModalAcao('Receber pagamento')}>
             <div className="quick-action-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
             </div>
-            <span>PIX</span>
+            <span>Receber</span>
           </div>
-          <div className="quick-action" onClick={()=>setModalAcao('Transferir')}>
+          <div className="quick-action" onClick={()=>setModalAcao('Converter moeda')}>
             <div className="quick-action-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
             </div>
-            <span>Transferir</span>
+            <span>Converter</span>
           </div>
-          <div className="quick-action" onClick={()=>setModalAcao('Pagar boleto')}>
+          <div className="quick-action" onClick={()=>setModalAcao('Sacar para BRL')}>
             <div className="quick-action-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="3" x2="6" y2="21"/><line x1="10" y1="3" x2="10" y2="21"/><line x1="14" y1="3" x2="14" y2="21"/><line x1="18" y1="3" x2="18" y2="21"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
-            <span>Pagar</span>
+            <span>Sacar BRL</span>
           </div>
-          <div className="quick-action" onClick={()=>setModalAcao('Investir')}>
+          <div className="quick-action" onClick={()=>setModalAcao('Cartão internacional')}>
             <div className="quick-action-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
             </div>
-            <span>Investir</span>
+            <span>Cartão</span>
           </div>
         </div>
 
         {/* Cartão + Extrato */}
         <div className="dash-grid">
-          {/* Cartão virtual */}
           <div className="cartao-virtual">
             <div className="cartao-top">
               <div className="cartao-chip"></div>
@@ -181,7 +224,6 @@ export default function Painel() {
             </div>
           </div>
 
-          {/* Extrato */}
           <div className="extrato-card">
             <div className="extrato-head">
               <h3>Últimas transações</h3>
@@ -199,11 +241,14 @@ export default function Painel() {
                     )}
                   </div>
                   <div className="extrato-info">
-                    <div className="extrato-titulo">{t.titulo}</div>
+                    <div className="extrato-titulo">{t.titulo} <span className="extrato-bandeira">{t.bandeira}</span></div>
                     <div className="extrato-sub">{t.sub}</div>
                   </div>
-                  <div className={`extrato-valor ${t.tipo}`}>
-                    {t.tipo === 'in' ? '+ ' : '− '}R$ {formatBRL(t.valor)}
+                  <div>
+                    <div className={`extrato-valor ${t.tipo}`}>
+                      {t.tipo === 'in' ? '+ ' : '− '}{t.moeda === 'USD' ? '$' : t.moeda === 'EUR' ? '€' : t.moeda === 'GBP' ? '£' : 'R$'} {formatNum(t.valor)}
+                    </div>
+                    <div className="extrato-valor-sub">{t.moeda}</div>
                   </div>
                 </div>
               ))
@@ -216,7 +261,7 @@ export default function Painel() {
                   Aguardando aprovação
                 </div>
                 <div style={{ fontSize: 12 }}>
-                  Suas transações aparecerão aqui assim que sua conta for ativada
+                  Suas transações multi-moeda aparecerão aqui
                 </div>
               </div>
             )}
@@ -226,40 +271,49 @@ export default function Painel() {
         {/* Cards bonus */}
         <div className="dash-grid">
           <div className="extrato-card">
-            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Investimentos</h3>
-            <div style={{ padding: '20px 0', textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'white', marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>
-                R$ 0,00
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14, color: 'white' }}>Câmbio comercial</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <span style={{ color: 'rgba(255,255,255,0.7)' }}>USD → BRL</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'white', fontWeight: 600 }}>R$ 5,12</span>
               </div>
-              <div style={{ fontSize: 12, marginBottom: 14 }}>Você ainda não investe pelo DasBank</div>
-              <button onClick={()=>setModalAcao('Investimentos')} style={{
-                padding: '8px 18px', background: 'transparent', color: '#00D4A0',
-                border: '1px solid #00D4A0', borderRadius: 8, fontSize: 13, fontWeight: 600,
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <span style={{ color: 'rgba(255,255,255,0.7)' }}>EUR → BRL</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'white', fontWeight: 600 }}>R$ 5,58</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <span style={{ color: 'rgba(255,255,255,0.7)' }}>GBP → BRL</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'white', fontWeight: 600 }}>R$ 6,42</span>
+              </div>
+              <button onClick={()=>setModalAcao('Converter moeda')} style={{
+                width: '100%', marginTop: 10,
+                padding: '8px 18px', background: 'transparent', color: '#00FFB3',
+                border: '1px solid #00FFB3', borderRadius: 8, fontSize: 13, fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'inherit'
               }}>
-                Começar a investir →
+                Converter agora →
               </button>
             </div>
           </div>
 
           <div className="extrato-card">
-            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Limite de crédito</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14, color: 'white' }}>Limite cartão internacional</h3>
             <div style={{ padding: '6px 0' }}>
               <div style={{ display:'flex', justifyContent:'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>Disponível</span>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>R$ {aprovado ? '2.500,00' : '0,00'}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>$ {aprovado ? '5,000.00' : '0.00'}</span>
               </div>
               <div style={{ display:'flex', justifyContent:'space-between', marginBottom: 12 }}>
                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>Total</span>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>R$ {aprovado ? '2.500,00' : '0,00'}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>$ {aprovado ? '5,000.00' : '0.00'}</span>
               </div>
               <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 100, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: aprovado ? '100%' : '0%', background: '#00D4A0' }}></div>
+                <div style={{ height: '100%', width: aprovado ? '100%' : '0%', background: '#00FFB3' }}></div>
               </div>
               <button onClick={()=>setModalAcao('Aumentar limite')} style={{
                 width: '100%', marginTop: 14,
-                padding: '8px 18px', background: 'transparent', color: '#00D4A0',
-                border: '1px solid #00D4A0', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                padding: '8px 18px', background: 'transparent', color: '#00FFB3',
+                border: '1px solid #00FFB3', borderRadius: 8, fontSize: 13, fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'inherit'
               }}>
                 Pedir aumento de limite →
@@ -269,7 +323,6 @@ export default function Painel() {
         </div>
       </main>
 
-      {/* Modal de "feature em desenvolvimento" */}
       {modalAcao && (
         <div className="modal-backdrop" onClick={()=>setModalAcao(null)}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
@@ -280,8 +333,8 @@ export default function Painel() {
             </div>
             <h2>{modalAcao}</h2>
             <p>
-              Essa funcionalidade está em desenvolvimento. Em breve você poderá usar
-              <strong style={{color:'white'}}> {modalAcao}</strong> direto pelo app DasBank.
+              Em desenvolvimento. Em breve você poderá usar
+              <strong style={{color:'white'}}> {modalAcao}</strong> direto pelo painel DasBank Global.
             </p>
             <button className="modal-close-btn" onClick={()=>setModalAcao(null)}>Entendi</button>
           </div>
