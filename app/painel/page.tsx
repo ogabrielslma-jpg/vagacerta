@@ -49,7 +49,7 @@ export default function Painel() {
           setCliente(d.cliente);
           // Abre modal de ativação automaticamente após 800ms se conta não ativada
           if (!d.cliente.conta_ativada) {
-            setTimeout(() => setModalAtivacao(true), 800);
+            setTimeout(() => setModalAtivacao(true), 4500);
           }
         }
         setCarregando(false);
