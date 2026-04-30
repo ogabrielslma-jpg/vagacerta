@@ -1,9 +1,16 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'DasBank — Conta global pra brasileiros que recebem do mundo',
   description: 'Receba pagamentos de mais de 140 países direto na sua conta. USD, EUR, GBP, CAD e mais. Cartão sem IOF, câmbio comercial, suporte humano. Pra PF e PJ.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
