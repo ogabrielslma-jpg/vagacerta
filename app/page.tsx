@@ -677,7 +677,7 @@ export default function Home() {
                   <div className="phone-content">
                     <div className="phone-greeting">
                       <div style={{fontSize:11, color:'rgba(255,255,255,0.5)'}}>Bom dia,</div>
-                      <div style={{fontSize:18, fontWeight:700}}>Gabriel 👋</div>
+                      <div style={{fontSize:18, fontWeight:700}}>Marcelo 👋</div>
                     </div>
 
                     <div className="phone-saldo">
