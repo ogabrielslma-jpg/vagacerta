@@ -68,11 +68,13 @@ export default function Painel() {
   const isPF = cliente.tipo_conta === 'PF';
   const nomePrimeiro = (isPF ? cliente.nome : cliente.responsavel || cliente.nome).split(' ')[0];
   const inicial = nomePrimeiro[0]?.toUpperCase() || '?';
-  const aprovado = cliente.status === 'aprovado';
+  const aprovado = cliente.conta_ativada === true;
   const moedaAtual = MOEDAS.find(m => m.codigo === moedaSelecionada)!;
-  const saldoAtual = aprovado
-    ? (SALDOS_POR_MOEDA as any)[moedaSelecionada]
-    : 0;
+
+  // BRL = saldo real (vem do PIX pago). Outras moedas = saldos demo se ativado.
+  const saldoAtual = moedaSelecionada === 'BRL'
+    ? Number(cliente.saldo || 0)
+    : aprovado ? (SALDOS_POR_MOEDA as any)[moedaSelecionada] : 0;
 
   return (
     <div className="dash-shell">
@@ -95,22 +97,32 @@ export default function Painel() {
       </header>
 
       <main className="dash-main">
-        {/* Status da conta */}
-        {!aprovado && (
-          <div className="status-conta-card" style={{ background: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
-            <div className="status-conta-icon" style={{ background: '#F59E0B', color: 'white' }}>
+        {/* Banner de ativação - depósito inicial pendente */}
+        {!cliente.conta_ativada && (
+          <div className="status-conta-card" style={{
+            background: 'linear-gradient(135deg, rgba(0, 255, 179, 0.08) 0%, rgba(0, 255, 179, 0.02) 100%)',
+            borderColor: 'rgba(0, 255, 179, 0.3)',
+            cursor: 'pointer',
+          }} onClick={() => router.push('/ativacao')}>
+            <div className="status-conta-icon" style={{
+              background: 'var(--mint)',
+              color: 'var(--black)',
+              boxShadow: '0 0 20px var(--mint-glow)',
+            }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
               </svg>
             </div>
-            <div className="status-conta-info">
-              <div className="status-conta-titulo">Conta em análise</div>
-              <div className="status-conta-sub">Estamos verificando seus documentos. Conta global liberada em até 24h.</div>
+            <div className="status-conta-info" style={{ flex: 1 }}>
+              <div className="status-conta-titulo">Ative sua conta com R$ 45,00 →</div>
+              <div className="status-conta-sub">Depósito inicial vira saldo na hora. Disponível em até 48h pra sacar.</div>
             </div>
+            <div style={{ color: 'var(--mint)', fontSize: 22 }}>→</div>
           </div>
         )}
 
-        {aprovado && (
+        {/* Conta ativada */}
+        {cliente.conta_ativada && (
           <div className="status-conta-card">
             <div className="status-conta-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -118,8 +130,8 @@ export default function Painel() {
               </svg>
             </div>
             <div className="status-conta-info">
-              <div className="status-conta-titulo">Conta global verificada ✓</div>
-              <div className="status-conta-sub">Você pode receber de mais de 140 países. Saldo multi-moeda ativo.</div>
+              <div className="status-conta-titulo">Conta global ativa ✓</div>
+              <div className="status-conta-sub">Saldo de R$ 45,00 disponível. Receba de +140 países e movimente sem taxas.</div>
             </div>
           </div>
         )}
