@@ -1,137 +1,126 @@
-# 🚀 VagaCerta — Portal de Empregos Home Office
+# 🏦 DasBank — Guia de instalação
 
-Landing page + cadastro + painel admin para captação de candidatos.
+Esse projeto substitui o VagaCerta no mesmo repo/Vercel/Supabase.
 
-## 📋 Stack
+## 📋 Passo a passo
 
-- **Next.js 14** (App Router, TypeScript)
-- **Supabase** (PostgreSQL grátis)
-- **Vercel** (hosting)
-
-## 🗂 Estrutura
-
-```
-/              → Landing pública com formulário de cadastro
-/admin         → Painel interno (senha protegida)
-/api/cadastrar → POST: recebe novos cadastros
-/api/admin/cadastros → GET/PATCH: lista e atualiza status (auth via header)
-```
-
-## ⚡ Deploy passo a passo
-
-### 1️⃣ Criar conta no Supabase
-
-1. Vá em https://supabase.com → Sign up (use sua conta Google)
-2. Clique em **New Project**
-3. Preencha:
-   - **Name:** `vagacerta`
-   - **Database Password:** gere uma forte e **salve** (você não vai precisar agora, mas guarde)
-   - **Region:** `South America (São Paulo)` — mais rápido pro BR
-4. Aguarde ~2 min até o projeto ficar pronto
-
-### 2️⃣ Criar a tabela no Supabase
-
-1. No painel do projeto, clique em **SQL Editor** (menu lateral)
-2. Clique em **New query**
-3. Abra o arquivo `supabase-setup.sql` deste projeto, **copie tudo e cole** no editor
-4. Clique em **Run** (canto inferior direito) ou aperte `Cmd+Enter`
-5. Você verá "Success. No rows returned" — pronto, tabela criada ✅
-
-### 3️⃣ Pegar as chaves do Supabase
-
-1. No menu lateral, vá em **Project Settings** (ícone de engrenagem) → **API**
-2. Copie e guarde:
-   - **Project URL** (algo como `https://xxxxx.supabase.co`)
-   - **service_role key** (em "Project API keys" — clique no olhinho pra revelar)
-   
-> ⚠️ A `service_role` é **secreta**. Nunca commite no Git, nunca compartilhe.
-
-### 4️⃣ Subir o código no GitHub
-
-No terminal, dentro da pasta do projeto:
-
+### 1. Backup do VagaCerta (opcional)
+Se quiser preservar o VagaCerta antes de sobrescrever:
 ```bash
-cd vagacerta
+cd ~/Documentos/vagacerta
+git checkout -b backup-vagacerta
+git push origin backup-vagacerta
+git checkout main
+```
 
-# Instala dependências localmente (opcional, mas recomendado pra testar)
-npm install
+### 2. Apagar arquivos antigos do VagaCerta
+```bash
+cd ~/Documentos/vagacerta
+rm -rf app components lib
+rm -f supabase-setup.sql supabase-migration-*.sql
+```
 
-# Inicializa o Git
-git init
+### 3. Copiar arquivos novos do DasBank
+Descompacte o `dasbank-v1.zip` e copie tudo pra dentro da pasta:
+```bash
+cp -R ~/Downloads/dasbank/* .
+```
+
+### 4. Criar a tabela no Supabase
+- Abrir o projeto no Supabase
+- SQL Editor → New query
+- Colar o conteúdo de `supabase-setup.sql`
+- Run
+
+### 5. Subir pro Git
+```bash
 git add .
-git commit -m "Initial commit"
-
-# Cria o repo no GitHub e linka
-git branch -M main
-git remote add origin https://github.com/ogabrielslma-jpg/vagacerta.git
-git push -u origin main
+git commit -m "transição: vagacerta → dasbank (banco digital demo)"
+git push
 ```
 
-> Se o repo `vagacerta` ainda não existe: vá em https://github.com/new, nome = `vagacerta`, **deixe vazio** (sem README, sem .gitignore), clique em **Create**, depois rode os comandos `git push` acima.
+### 6. Renomear projeto no Vercel (opcional)
+- vercel.com → seu projeto
+- Settings → General → Project Name
+- Mudar de `vagacerta` pra `dasbank`
+- Domain: passa a ser `dasbank-XXXX.vercel.app`
 
-### 5️⃣ Deploy no Vercel
+As env vars do Vercel **continuam as mesmas** (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_PASSWORD, JWT_SECRET).
 
-1. Vá em https://vercel.com/new
-2. Selecione o repositório `ogabrielslma-jpg/vagacerta` → **Import**
-3. Em **Environment Variables**, adicione as 3 variáveis:
+## 🎯 Como apresentar pro seu conhecido
 
-| Nome | Valor |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL do Supabase (passo 3) |
-| `SUPABASE_SERVICE_ROLE_KEY` | service_role key do Supabase (passo 3) |
-| `ADMIN_PASSWORD` | `admin2026` (ou outra de sua escolha) |
+### Roteiro sugerido (5 minutos):
 
-4. Clique em **Deploy**
-5. Em ~2 minutos seu site estará no ar em `https://vagacerta-xxx.vercel.app`
+**1. Abre a landing no celular ou notebook**
+- Mostra hero, seções "como funciona", benefícios, depoimentos
+- "Olha, o site explica tudo: PF e PJ, zero taxa, PIX ilimitado"
 
-### 6️⃣ Testar
+**2. Faz o cadastro ao vivo**
+- Escolhe PF ou PJ
+- Preenche dados (use os seus, ou dados fake — qualquer CPF)
+- Sobe **qualquer foto** nos 4 campos de documento (qualquer JPG funciona — não validamos)
+- Cria senha
+- "Pronto, conta criada — agora cai numa tela de 'em análise'"
 
-1. Acesse o domínio do Vercel
-2. Faça um cadastro de teste no formulário da landing
-3. Acesse `https://seudominio.vercel.app/admin`
-4. Digite a senha (`admin2026` ou a que você configurou)
-5. Você deve ver o cadastro de teste na tabela ✅
+**3. Mostra o painel logado**
+- "Olha como já tá com aviso de 'em análise'"
+- Cartão virtual visível, saldo zerado, extrato vazio
+- "Quando o banco aprovar, esses campos enchem"
 
-## 🧪 Rodar localmente (opcional)
+**4. Abre outra aba — painel admin**
+- `dasbank-XXXX.vercel.app/admin`
+- Senha admin
+- "Aqui é quem opera o banco. Olha — tem o cadastro que eu acabei de fazer"
+- Clica no cadastro → modal abre com todos os dados + 4 fotos de docs
+- Clica em **"✓ Aprovar conta"**
 
-```bash
-# Copia .env.example pra .env.local e preenche com suas chaves
-cp .env.example .env.local
-# Edita .env.local com as chaves do Supabase
+**5. Volta no painel do cliente e dá refresh**
+- "Agora a conta tá aprovada — saldo de R$ 1.247,85, transações fakes apareceram, cartão liberado"
+- Clica em PIX/Transferir/Investir → modal "em desenvolvimento"
+- "A interface tá toda pronta. Faltam as integrações reais"
 
-npm install
-npm run dev
-# Abre em http://localhost:3000
+## ⚠️ Avisos importantes
+
+1. **Deixa claro que é demo.** "É um protótipo navegável pra mostrar a UX. A parte regulatória (BC, BaaS) é fase posterior."
+
+2. **Não é banco de verdade.** Avise que pra operar de verdade precisa de: licença BC, parceria com BaaS (Pagar.me, Bankly, Dock, Belvo, etc), AML/KYC real, etc.
+
+3. **Custos reais pra virar produto:**
+   - BaaS: a partir de R$ 5k/mês
+   - DPO + Compliance: R$ 10-20k/mês
+   - Time mínimo: 5-8 pessoas (devs, design, ops)
+   - MVP real: 4-6 meses + R$ 200-500k
+
+## 🎨 Customização rápida
+
+Se ele topar e quiser uma versão personalizada:
+
+### Trocar nome
+- Buscar e substituir "DasBank" → "NovoBanco" em todos os arquivos
+- Trocar `Das<span>Bank</span>` no `Logo.tsx` e na page.tsx
+
+### Trocar cores
+Edite `app/globals.css` linhas 3-12:
+```css
+--teal-deep: #0B3D3A;   /* fundo escuro */
+--mint: #00D4A0;        /* cor de acento */
 ```
 
-## 🔧 Trocar a senha do admin
+### Trocar logo
+Edite `components/Logo.tsx` — substitua o SVG pelo logo do banco.
 
-No Vercel: **Project Settings → Environment Variables** → edita `ADMIN_PASSWORD` → **Redeploy**.
+## 📂 Estrutura
 
-## 📊 Status dos cadastros
-
-O painel admin organiza os candidatos em 4 status:
-
-- **🟢 Novo** — cadastro recém-recebido, ainda não processado
-- **🟠 Contatado** — você já entrou em contato
-- **🔵 Agendado** — entrevista marcada (este é o que **converte em receita** pra vocês)
-- **⚫ Descartado** — perfil não se encaixa
-
-## 🎯 Próximos passos sugeridos
-
-1. **Domínio próprio** — comprar `vagacerta.com.br` e apontar pro Vercel (Settings → Domains)
-2. **Notificação por email/WhatsApp** quando entrar cadastro novo (Resend + webhook)
-3. **Integração com a API do parceiro** — endpoint `/api/disparar` que pega cadastros com status "novo" e dispara
-4. **Captura via Meta Ads / TikTok Ads** — adicionar Pixel da Meta na landing
-5. **Sistema de tags** nos cadastros (ex: "fluente em inglês", "tem CNPJ")
-
-## 🆘 Problemas comuns
-
-**"Erro ao salvar cadastro" no formulário**
-→ Verifica se as variáveis `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` estão corretas no Vercel e se você rodou o `supabase-setup.sql`
-
-**"Senha incorreta" no /admin mesmo digitando certo**
-→ Verifica se a variável `ADMIN_PASSWORD` está exatamente igual no Vercel (cuidado com espaços)
-
-**Email duplicado**
-→ A tabela tem constraint de unicidade no email. Se a pessoa tentar cadastrar 2x, retorna erro. (você pode remover essa restrição no SQL se quiser)
+```
+dasbank/
+├── app/
+│   ├── page.tsx              landing + form
+│   ├── login/page.tsx
+│   ├── painel/page.tsx       dashboard logado
+│   ├── admin/page.tsx        painel banco
+│   ├── sucesso/page.tsx      pós-cadastro
+│   └── api/                  rotas backend
+├── components/Logo.tsx
+├── lib/                      supabase + auth
+└── supabase-setup.sql
+```

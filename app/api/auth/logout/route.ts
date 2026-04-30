@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 export async function POST() {
-  const res = NextResponse.json({ ok: true });
-  res.cookies.delete('vc_token');
-  return res;
+  const response = NextResponse.json({ ok: true });
+  response.cookies.set('db_token', '', { maxAge: 0, path: '/' });
+  return response;
 }

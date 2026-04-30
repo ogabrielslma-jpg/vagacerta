@@ -1,25 +1,31 @@
-// Logo D — V com pino. SVG inline para usar em qualquer lugar.
-export function LogoMark({ size = 34 }: { size?: number }) {
+// Logo DasBank — D estilizado em verde-menta com seta de movimento
+export function LogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
       <defs>
-        <linearGradient id="vc-logo-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#16213E" />
-          <stop offset="100%" stopColor="#0F0F1F" />
+        <linearGradient id="db-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#0F4F4A" />
+          <stop offset="100%" stopColor="#0B3D3A" />
+        </linearGradient>
+        <linearGradient id="db-d" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#00E5B0" />
+          <stop offset="100%" stopColor="#00B788" />
         </linearGradient>
       </defs>
-      <rect x="2" y="2" width="56" height="56" rx="14" fill="url(#vc-logo-bg)" />
-      <path d="M 14 18 L 30 46 L 46 18" stroke="#E94560" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="30" cy="11" r="3.5" fill="#E94560" />
+      <rect x="2" y="2" width="56" height="56" rx="14" fill="url(#db-bg)" />
+      <path d="M 18 16 L 18 44 L 32 44 Q 44 44 44 30 Q 44 16 32 16 Z" fill="none" stroke="url(#db-d)" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="44" cy="30" r="3" fill="#00E5B0" />
     </svg>
   );
 }
 
-export function Logo({ size = 34, color = 'white' }: { size?: number; color?: string }) {
+export function Logo({ size = 36, color = 'white' }: { size?: number; color?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       <LogoMark size={size} />
-      <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color }}>VagaCerta</span>
+      <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.025em', color }}>
+        Das<span style={{ color: '#00D4A0' }}>Bank</span>
+      </span>
     </div>
   );
 }

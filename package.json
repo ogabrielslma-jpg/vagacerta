@@ -1,6 +1,6 @@
 {
-  "name": "vagacerta",
-  "version": "0.3.0",
+  "name": "dasbank",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,105 +1,91 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { supabaseAdmin } from '@/lib/supabase';
 import { generateToken } from '@/lib/auth';
-import bcrypt from 'bcryptjs';
 
 export const runtime = 'nodejs';
-
-function calcularIdade(dataNascimento: string): number | null {
-  if (!dataNascimento) return null;
-  const nasc = new Date(dataNascimento);
-  if (isNaN(nasc.getTime())) return null;
-  const hoje = new Date();
-  let idade = hoje.getFullYear() - nasc.getFullYear();
-  const m = hoje.getMonth() - nasc.getMonth();
-  if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
-  return idade;
-}
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const required = ['nome', 'email', 'whatsapp', 'data_nascimento', 'sexo', 'cep', 'cidade', 'estado', 'escolaridade', 'disponibilidade', 'turno', 'salario', 'bio', 'senha'];
-    for (const field of required) {
-      if (!body[field] || String(body[field]).trim() === '') {
-        return NextResponse.json({ error: `Campo obrigatório: ${field}` }, { status: 400 });
-      }
+    if (!body.nome || !body.email || !body.whatsapp || !body.senha || !body.tipo_conta) {
+      return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
     }
-
-    if (!Array.isArray(body.areas_interesse) || body.areas_interesse.length === 0) {
-      return NextResponse.json({ error: 'Selecione ao menos uma área de interesse' }, { status: 400 });
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
-      return NextResponse.json({ error: 'Email inválido' }, { status: 400 });
-    }
-
     if (body.senha.length < 6) {
-      return NextResponse.json({ error: 'Senha deve ter ao menos 6 caracteres' }, { status: 400 });
+      return NextResponse.json({ error: 'Senha precisa ter no mínimo 6 caracteres' }, { status: 400 });
     }
 
-    const idade = calcularIdade(body.data_nascimento);
+    const email = String(body.email).toLowerCase().trim();
+
+    const { data: existente } = await supabaseAdmin
+      .from('clientes')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existente) {
+      return NextResponse.json({ error: 'Esse email já está cadastrado. Faça login.' }, { status: 409 });
+    }
+
     const senha_hash = await bcrypt.hash(body.senha, 10);
 
-    const { data, error } = await supabaseAdmin
-      .from('cadastros')
-      .insert({
-        nome: body.nome.trim(),
-        email: body.email.trim().toLowerCase(),
-        whatsapp: body.whatsapp.trim(),
-        data_nascimento: body.data_nascimento,
-        idade,
-        sexo: body.sexo,
-        cep: body.cep.trim(),
-        cidade: body.cidade.trim(),
-        estado: body.estado.trim(),
-        escolaridade: body.escolaridade,
-        areas_interesse: body.areas_interesse,
-        area: body.areas_interesse[0] || '',
-        experiencia: Array.isArray(body.experiencias) && body.experiencias.length > 0 ? `${body.experiencias.length} experiência(s)` : 'Sem experiência',
-        experiencias: body.experiencias || [],
-        disponibilidade: body.disponibilidade,
-        turno: body.turno,
-        salario: body.salario.trim(),
-        bio: body.bio.trim(),
-        linkedin: body.linkedin?.trim() || null,
-        status: 'novo',
-        senha_hash,
-      })
-      .select()
+    // Gera dados de "conta" fake
+    const numeroConta = String(Math.floor(100000 + Math.random() * 899999)) + '-' + Math.floor(Math.random() * 10);
+    const numeroCartao = '5234 ' + Math.floor(1000 + Math.random()*8999) + ' ' + Math.floor(1000 + Math.random()*8999) + ' ' + Math.floor(1000 + Math.random()*8999);
+
+    const insertData: any = {
+      tipo_conta: body.tipo_conta,
+      nome: body.nome,
+      razao_social: body.razao_social || null,
+      responsavel: body.responsavel || null,
+      documento: body.documento,
+      data_nascimento: body.data_nascimento || null,
+      email,
+      whatsapp: body.whatsapp,
+      cep: body.cep || null,
+      logradouro: body.logradouro || null,
+      numero: body.numero || null,
+      bairro: body.bairro || null,
+      cidade: body.cidade || null,
+      estado: body.estado || null,
+      profissao: body.profissao || null,
+      renda: body.renda || null,
+      docs_enviados: body.docs_enviados || true,
+      senha_hash,
+      ultimo_acesso: new Date().toISOString(),
+      status: 'em_analise',
+      numero_conta: numeroConta,
+      numero_cartao: numeroCartao,
+      saldo: 0,
+      agencia: '0001',
+    };
+
+    const { data: novo, error } = await supabaseAdmin
+      .from('clientes')
+      .insert(insertData)
+      .select('id, email, nome')
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
-      if (error.code === '23505') {
-        return NextResponse.json({ error: 'Este email já está cadastrado. Faça login no painel.' }, { status: 409 });
-      }
+      console.error('Erro inserindo:', error);
       return NextResponse.json({ error: 'Erro ao salvar cadastro' }, { status: 500 });
     }
 
-    // Cria mensagem de boas-vindas
-    await supabaseAdmin.from('mensagens').insert({
-      cadastro_id: data.id,
-      titulo: 'Bem-vindo(a) à VagaCerta! 🎉',
-      corpo: `Olá ${data.nome.split(' ')[0]}! Seu perfil foi cadastrado com sucesso. A partir de agora, vamos te enviar vagas home office sob medida pra você. Fique de olho neste painel — entrevistas costumam ser marcadas em até 7 dias.`,
-      tipo: 'sistema',
-    });
-
-    // Gera token e retorna
-    const token = generateToken(data.id, data.email);
-
-    const res = NextResponse.json({ ok: true, id: data.id, token });
-    res.cookies.set('vc_token', token, {
+    const token = generateToken(novo.id, novo.email);
+    const response = NextResponse.json({ ok: true, id: novo.id });
+    response.cookies.set('db_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 dias
+      maxAge: 60 * 60 * 24 * 30,
       path: '/',
     });
-    return res;
-  } catch (err: any) {
-    console.error('Cadastro error:', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+
+    return response;
+  } catch (e: any) {
+    console.error('Erro na API cadastrar:', e);
+    return NextResponse.json({ error: e.message || 'Erro interno' }, { status: 500 });
   }
 }

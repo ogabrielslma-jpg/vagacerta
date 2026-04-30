@@ -4,63 +4,90 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogoMark } from '@/components/Logo';
 
-export default function LoginPage() {
+export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [erro, setErro] = useState('');
+  const [carregando, setCarregando] = useState(false);
+  const [showSenha, setShowSenha] = useState(false);
 
-  const handleSubmit = async (e: FormEvent) => {
+  async function entrar(e: FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setErro('');
+    setCarregando(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const r = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, senha }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Erro ao entrar');
-        setLoading(false);
-        return;
-      }
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Erro ao entrar');
       router.push('/painel');
-    } catch {
-      setError('Erro de conexão');
-      setLoading(false);
+    } catch (err: any) {
+      setErro(err.message);
+      setCarregando(false);
     }
-  };
+  }
 
   return (
-    <div className="admin-shell">
-      <div className="admin-login">
-        <div className="admin-login-card">
-          <a href="/" className="logo" style={{ marginBottom: 24, justifyContent: 'center' }}>
-            <LogoMark size={32} />
-            VagaCerta
-          </a>
-          <h1>Entrar no seu painel</h1>
-          <p>Acompanhe as vagas que selecionamos pra você.</p>
-          <form onSubmit={handleSubmit}>
-            <div className="field">
-              <label>E-mail</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" autoFocus required />
-            </div>
-            <div className="field">
-              <label>Senha</label>
-              <input type="password" value={senha} onChange={e => setSenha(e.target.value)} placeholder="••••••••" required />
-            </div>
-            {error && <div className="form-error">{error}</div>}
-            <button type="submit" className="btn-form-submit" style={{ width: '100%', marginTop: 16 }} disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar'}
-            </button>
-          </form>
-          <div style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: 'var(--ink-dim)' }}>
-            Ainda não tem conta? <a href="/#cadastro" style={{ color: 'var(--lime)', fontWeight: 600 }}>Cadastre-se grátis</a>
+    <div className="login-shell">
+      <div className="login-card">
+        <a href="/" style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', textDecoration: 'none' }}>
+          <LogoMark size={36} />
+          <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.025em', color: '#0F1A1A' }}>
+            Das<span style={{ color: '#00B788' }}>Bank</span>
+          </span>
+        </a>
+
+        <h1>Entrar na sua conta</h1>
+        <p>Acesse seu painel DasBank.</p>
+
+        <form onSubmit={entrar}>
+          <div className="field">
+            <label>Email</label>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="seu@email.com" required />
           </div>
+          <div className="field" style={{ position: 'relative' }}>
+            <label>Senha</label>
+            <input
+              type={showSenha ? 'text' : 'password'}
+              value={senha}
+              onChange={e=>setSenha(e.target.value)}
+              placeholder="Sua senha"
+              required
+              style={{ paddingRight: 40 }}
+            />
+            <button type="button" className="toggle-senha" onClick={()=>setShowSenha(!showSenha)} style={{ top: '70%' }}>
+              {showSenha ? '🙈' : '👁️'}
+            </button>
+          </div>
+          {erro && <div className="form-error" style={{ marginBottom: 10 }}>{erro}</div>}
+          <button
+            type="submit"
+            disabled={carregando}
+            style={{
+              width: '100%',
+              padding: '13px',
+              background: '#00D4A0',
+              color: '#0B3D3A',
+              border: 'none',
+              borderRadius: 10,
+              fontWeight: 700,
+              fontSize: 15,
+              cursor: carregando ? 'not-allowed' : 'pointer',
+              opacity: carregando ? 0.6 : 1,
+              fontFamily: 'inherit',
+              marginTop: 4,
+            }}
+          >
+            {carregando ? 'Entrando...' : 'Entrar'}
+          </button>
+        </form>
+
+        <div className="login-link">
+          Não tem conta? <a href="/">Abra a sua grátis</a>
         </div>
       </div>
     </div>

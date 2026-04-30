@@ -3,320 +3,305 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { LogoMark } from '@/components/Logo';
 
-type Experiencia = {
-  empresa: string; cargo: string; inicio: string; fim: string; atual: boolean; resumo: string;
+const STATUS_LABELS: Record<string, string> = {
+  em_analise: 'Em análise',
+  aprovado: 'Aprovado',
+  reprovado: 'Reprovado',
+  pendente_docs: 'Pendente docs',
 };
 
-type Cadastro = {
-  id: string;
-  nome: string;
-  email: string;
-  whatsapp: string;
-  data_nascimento: string | null;
-  idade: number | null;
-  sexo: string | null;
-  cep: string | null;
-  cidade: string;
-  estado: string | null;
-  escolaridade: string | null;
-  areas_interesse: string[] | null;
-  area: string;
-  experiencias: Experiencia[] | null;
-  experiencia: string;
-  disponibilidade: string;
-  turno: string | null;
-  salario: string;
-  bio: string;
-  linkedin: string | null;
-  status: 'novo' | 'contatado' | 'agendado' | 'descartado';
-  observacao: string | null;
-  created_at: string;
+const formatDoc = (tipo: string, doc: string) => {
+  if (!doc) return '';
+  if (tipo === 'PF') return doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  return doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
 };
 
-type Stats = { total: number; novo: number; contatado: number; agendado: number; descartado: number };
+export default function Admin() {
+  const [autenticado, setAutenticado] = useState(false);
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
+  const [carregando, setCarregando] = useState(false);
+  const [cadastros, setCadastros] = useState<any[]>([]);
+  const [filtroStatus, setFiltroStatus] = useState('todos');
+  const [busca, setBusca] = useState('');
+  const [modal, setModal] = useState<any>(null);
 
-export default function AdminPage() {
-  const [password, setPassword] = useState('');
-  const [authed, setAuthed] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [cadastros, setCadastros] = useState<Cadastro[]>([]);
-  const [stats, setStats] = useState<Stats>({ total: 0, novo: 0, contatado: 0, agendado: 0, descartado: 0 });
-  const [filter, setFilter] = useState<string>('todos');
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState<Cadastro | null>(null);
-
-  const handleLogin = async (e: FormEvent) => {
+  async function autenticar(e: FormEvent) {
     e.preventDefault();
-    setLoginError(null);
-    const res = await fetch('/api/admin/cadastros', { headers: { 'x-admin-password': password } });
-    if (res.ok) {
-      sessionStorage.setItem('vc_admin_pwd', password);
-      setAuthed(true);
-      const data = await res.json();
-      setCadastros(data.cadastros || []);
-      setStats(data.stats);
-    } else {
-      setLoginError('Senha incorreta');
+    setErro('');
+    setCarregando(true);
+    try {
+      const r = await fetch('/api/admin/cadastros', { headers: { 'x-admin-password': senha } });
+      if (r.status === 401) throw new Error('Senha incorreta');
+      const j = await r.json();
+      sessionStorage.setItem('db_admin_pw', senha);
+      setAutenticado(true);
+      setCadastros(j.cadastros || []);
+    } catch (err: any) {
+      setErro(err.message);
     }
-  };
+    setCarregando(false);
+  }
 
-  useEffect(() => {
-    const saved = sessionStorage.getItem('vc_admin_pwd');
-    if (saved) {
-      setPassword(saved);
-      fetch('/api/admin/cadastros', { headers: { 'x-admin-password': saved } })
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(data => {
-          setAuthed(true);
-          setCadastros(data.cadastros || []);
-          setStats(data.stats);
-        })
-        .catch(() => sessionStorage.removeItem('vc_admin_pwd'));
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!authed) return;
-    setLoading(true);
-    const pwd = sessionStorage.getItem('vc_admin_pwd') || password;
+  async function carregar() {
+    const pw = sessionStorage.getItem('db_admin_pw');
+    if (!pw) return;
     const params = new URLSearchParams();
-    if (filter !== 'todos') params.set('status', filter);
-    if (search) params.set('q', search);
-    fetch(`/api/admin/cadastros?${params}`, { headers: { 'x-admin-password': pwd } })
-      .then(r => r.json())
-      .then(data => {
-        setCadastros(data.cadastros || []);
-        setStats(data.stats);
-        setLoading(false);
-      });
-  }, [filter, search, authed]);
+    if (filtroStatus !== 'todos') params.set('status', filtroStatus);
+    if (busca) params.set('busca', busca);
+    const r = await fetch(`/api/admin/cadastros?${params}`, { headers: { 'x-admin-password': pw } });
+    const j = await r.json();
+    setCadastros(j.cadastros || []);
+  }
 
-  const updateStatus = async (id: string, status: string) => {
-    const pwd = sessionStorage.getItem('vc_admin_pwd') || password;
-    await fetch('/api/admin/cadastros', {
+  useEffect(() => { if (autenticado) carregar(); }, [filtroStatus, busca, autenticado]);
+
+  async function aprovar(id: string, status: string) {
+    const pw = sessionStorage.getItem('db_admin_pw');
+    await fetch('/api/admin/aprovar', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': pw! },
       body: JSON.stringify({ id, status }),
     });
-    setCadastros(prev => prev.map(c => c.id === id ? { ...c, status: status as any } : c));
-    if (selected && selected.id === id) setSelected({ ...selected, status: status as any });
-    fetch('/api/admin/cadastros', { headers: { 'x-admin-password': pwd } })
-      .then(r => r.json()).then(d => setStats(d.stats));
-  };
+    setModal(null);
+    carregar();
+  }
 
-  const logout = () => {
-    sessionStorage.removeItem('vc_admin_pwd');
-    setAuthed(false);
-    setPassword('');
-  };
+  function sair() {
+    sessionStorage.removeItem('db_admin_pw');
+    setAutenticado(false);
+    setSenha('');
+  }
 
-  const formatDate = (s: string) => {
-    const d = new Date(s);
-    return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-  };
-
-  const formatPeriodo = (exp: Experiencia) => {
-    const fmt = (m: string) => {
-      if (!m) return '';
-      const [y, mo] = m.split('-');
-      return `${mo}/${y}`;
-    };
-    const i = fmt(exp.inicio);
-    const f = exp.atual ? 'atual' : fmt(exp.fim);
-    return `${i}${f ? ` — ${f}` : ''}`;
-  };
-
-  const whatsappLink = (n: string) => `https://wa.me/55${n.replace(/\D/g, '')}`;
-
-  if (!authed) {
+  if (!autenticado) {
     return (
-      <div className="admin-shell">
-        <div className="admin-login">
-          <div className="admin-login-card">
-            <div className="logo" style={{ marginBottom: 20, justifyContent: 'center' }}>
-              <LogoMark size={32} />
-              VagaCerta
-            </div>
-            <h1>Painel Admin</h1>
-            <p>Acesso restrito ao time interno.</p>
-            <form onSubmit={handleLogin}>
-              <div className="field">
-                <label>Senha</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" autoFocus />
-              </div>
-              {loginError && <div className="form-error">{loginError}</div>}
-              <button type="submit" className="btn-form-submit" style={{ width: '100%', marginTop: 16 }}>Entrar</button>
-            </form>
+      <div className="admin-login">
+        <div className="admin-login-card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 20 }}>
+            <LogoMark size={36} />
+            <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.025em', color: '#0F1A1A' }}>
+              Das<span style={{ color: '#00B788' }}>Bank</span>
+            </span>
           </div>
+          <h1>Painel administrativo</h1>
+          <p>Acesso restrito a operadores do banco.</p>
+          <form onSubmit={autenticar}>
+            <div className="field">
+              <label>Senha</label>
+              <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} required />
+            </div>
+            {erro && <div className="form-error" style={{marginBottom:10}}>{erro}</div>}
+            <button
+              type="submit"
+              disabled={carregando}
+              style={{
+                width: '100%',
+                padding: 13,
+                background: '#00D4A0',
+                color: '#0B3D3A',
+                border: 'none',
+                borderRadius: 10,
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              {carregando ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
         </div>
       </div>
     );
   }
 
+  const stats = {
+    total: cadastros.length,
+    em_analise: cadastros.filter(c=>c.status === 'em_analise').length,
+    aprovado: cadastros.filter(c=>c.status === 'aprovado').length,
+    reprovado: cadastros.filter(c=>c.status === 'reprovado').length,
+  };
+
   return (
     <div className="admin-shell">
       <header className="admin-header">
-        <h1><LogoMark size={28} />VagaCerta · Admin</h1>
-        <button className="btn-logout" onClick={logout}>Sair</button>
+        <h1><LogoMark size={28} />DasBank · Admin</h1>
+        <button className="btn-logout" onClick={sair}>Sair</button>
       </header>
 
       <main className="admin-main">
         <div className="admin-stats">
-          <div className={`stat-card ${filter === 'todos' ? 'active' : ''}`} onClick={() => setFilter('todos')}>
+          <div className={`stat-card ${filtroStatus==='todos'?'active':''}`} onClick={()=>setFiltroStatus('todos')}>
             <div className="stat-card-num">{stats.total}</div>
             <div className="stat-card-label">Total</div>
           </div>
-          <div className={`stat-card ${filter === 'novo' ? 'active' : ''}`} onClick={() => setFilter('novo')}>
-            <div className="stat-card-num" style={{ color: 'var(--lime)' }}>{stats.novo}</div>
-            <div className="stat-card-label">Novos</div>
+          <div className={`stat-card ${filtroStatus==='em_analise'?'active':''}`} onClick={()=>setFiltroStatus('em_analise')}>
+            <div className="stat-card-num">{stats.em_analise}</div>
+            <div className="stat-card-label">Em análise</div>
           </div>
-          <div className={`stat-card ${filter === 'contatado' ? 'active' : ''}`} onClick={() => setFilter('contatado')}>
-            <div className="stat-card-num" style={{ color: 'var(--orange)' }}>{stats.contatado}</div>
-            <div className="stat-card-label">Contatados</div>
+          <div className={`stat-card ${filtroStatus==='aprovado'?'active':''}`} onClick={()=>setFiltroStatus('aprovado')}>
+            <div className="stat-card-num">{stats.aprovado}</div>
+            <div className="stat-card-label">Aprovados</div>
           </div>
-          <div className={`stat-card ${filter === 'agendado' ? 'active' : ''}`} onClick={() => setFilter('agendado')}>
-            <div className="stat-card-num" style={{ color: '#64C8FF' }}>{stats.agendado}</div>
-            <div className="stat-card-label">Agendados 💰</div>
-          </div>
-          <div className={`stat-card ${filter === 'descartado' ? 'active' : ''}`} onClick={() => setFilter('descartado')}>
-            <div className="stat-card-num" style={{ color: 'var(--ink-dim)' }}>{stats.descartado}</div>
-            <div className="stat-card-label">Descartados</div>
+          <div className={`stat-card ${filtroStatus==='reprovado'?'active':''}`} onClick={()=>setFiltroStatus('reprovado')}>
+            <div className="stat-card-num">{stats.reprovado}</div>
+            <div className="stat-card-label">Reprovados</div>
           </div>
         </div>
 
-        <div className="admin-filters">
-          <input className="admin-search" placeholder="Buscar por nome, email ou WhatsApp..." value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
+        <input
+          type="text"
+          className="admin-search"
+          placeholder="🔍  Buscar por nome, email ou CPF/CNPJ..."
+          value={busca}
+          onChange={e=>setBusca(e.target.value)}
+        />
 
         <div className="cadastros-table">
           <div className="table-row head">
-            <div>Nome</div>
-            <div>WhatsApp</div>
-            <div>Áreas</div>
-            <div>Cidade</div>
-            <div>Status</div>
-            <div>Data</div>
+            <span>Cliente</span>
+            <span>Email</span>
+            <span>WhatsApp</span>
+            <span>Tipo</span>
+            <span>Status</span>
+            <span>Ações</span>
           </div>
-
-          {loading ? (
-            <div className="loading">Carregando...</div>
-          ) : cadastros.length === 0 ? (
+          {cadastros.length === 0 ? (
             <div className="empty-state">
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-              <div>Nenhum cadastro {filter !== 'todos' ? `com status "${filter}"` : 'ainda'}.</div>
+              {busca ? 'Nenhum resultado encontrado' : 'Nenhum cadastro ainda'}
             </div>
           ) : (
-            cadastros.map(c => {
-              const areas = c.areas_interesse && c.areas_interesse.length > 0 ? c.areas_interesse : (c.area ? [c.area] : []);
-              return (
-                <div key={c.id} className="table-row" onClick={() => setSelected(c)}>
-                  <div><strong>{c.nome}</strong><div style={{ fontSize: 12, color: 'var(--ink-dim)' }}>{c.email}</div></div>
-                  <div>{c.whatsapp}</div>
-                  <div style={{ fontSize: 13 }}>{areas.slice(0, 2).join(', ')}{areas.length > 2 ? ` +${areas.length - 2}` : ''}</div>
-                  <div>{c.cidade}{c.estado ? `, ${c.estado}` : ''}</div>
-                  <div><span className={`status-pill status-${c.status}`}>{c.status}</span></div>
-                  <div style={{ fontSize: 13, color: 'var(--ink-dim)' }}>{formatDate(c.created_at)}</div>
-                </div>
-              );
-            })
+            cadastros.map(c => (
+              <div key={c.id} className="table-row" onClick={()=>setModal(c)}>
+                <span style={{ fontWeight: 600 }}>{c.nome}</span>
+                <span style={{ color: 'rgba(255,255,255,0.7)' }}>{c.email}</span>
+                <span style={{ color: 'rgba(255,255,255,0.7)' }}>{c.whatsapp}</span>
+                <span><span className="tipo-pill">{c.tipo_conta}</span></span>
+                <span><span className={`status-pill status-${c.status}`}>{STATUS_LABELS[c.status] || c.status}</span></span>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Ver →</span>
+              </div>
+            ))
           )}
         </div>
       </main>
 
-      {selected && (
-        <div className="modal-backdrop" onClick={() => setSelected(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-head">
+      {/* Modal */}
+      {modal && (
+        <div className="modal-backdrop" onClick={()=>setModal(null)}>
+          <div className="admin-modal" onClick={e=>e.stopPropagation()}>
+            <div className="admin-modal-head">
               <div>
-                <h2>{selected.nome}</h2>
-                <div style={{ fontSize: 13, color: 'var(--ink-dim)', marginTop: 4 }}>
-                  Cadastrado em {formatDate(selected.created_at)}
+                <h2>{modal.nome}</h2>
+                <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                  <span className="tipo-pill" style={{ background: '#EEF2F2', color: '#0F1A1A' }}>{modal.tipo_conta}</span>
+                  <span className={`status-pill status-${modal.status}`}>{STATUS_LABELS[modal.status]}</span>
                 </div>
               </div>
-              <button className="modal-close" onClick={() => setSelected(null)}>×</button>
+              <button className="modal-close" onClick={()=>setModal(null)}>×</button>
             </div>
-            <div className="modal-body">
+            <div className="admin-modal-body">
               <div className="detail-grid">
                 <div>
-                  <div className="label">E-mail</div>
-                  <div className="value"><a href={`mailto:${selected.email}`}>{selected.email}</a></div>
+                  <div className="label">Email</div>
+                  <div className="value">{modal.email}</div>
                 </div>
                 <div>
                   <div className="label">WhatsApp</div>
-                  <div className="value">{selected.whatsapp}</div>
+                  <div className="value">{modal.whatsapp}</div>
                 </div>
                 <div>
-                  <div className="label">Idade · Sexo</div>
-                  <div className="value">{selected.idade || '—'} anos · {selected.sexo || '—'}</div>
+                  <div className="label">{modal.tipo_conta === 'PF' ? 'CPF' : 'CNPJ'}</div>
+                  <div className="value mono">{formatDoc(modal.tipo_conta, modal.documento)}</div>
                 </div>
-                <div>
-                  <div className="label">Localização</div>
-                  <div className="value">{selected.cidade}{selected.estado ? ` / ${selected.estado}` : ''} {selected.cep ? `· CEP ${selected.cep}` : ''}</div>
-                </div>
-                <div>
-                  <div className="label">Escolaridade</div>
-                  <div className="value">{selected.escolaridade || '—'}</div>
-                </div>
-                <div>
-                  <div className="label">Disponibilidade · Turno</div>
-                  <div className="value">{selected.disponibilidade}{selected.turno ? ` · ${selected.turno}` : ''}</div>
-                </div>
-                <div>
-                  <div className="label">Pretensão salarial</div>
-                  <div className="value">R$ {selected.salario}</div>
-                </div>
-                {selected.linkedin && (
+                {modal.tipo_conta === 'PF' ? (
                   <div>
-                    <div className="label">LinkedIn</div>
-                    <div className="value"><a href={selected.linkedin} target="_blank" rel="noopener">Ver perfil ↗</a></div>
+                    <div className="label">Data nascimento</div>
+                    <div className="value">{modal.data_nascimento ? new Date(modal.data_nascimento).toLocaleDateString('pt-BR') : '—'}</div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="label">Responsável</div>
+                    <div className="value">{modal.responsavel || '—'}</div>
                   </div>
                 )}
-              </div>
-
-              <div className="detail-section-title">Áreas de interesse</div>
-              <div className="detail-areas">
-                {(selected.areas_interesse && selected.areas_interesse.length > 0
-                  ? selected.areas_interesse
-                  : (selected.area ? [selected.area] : [])
-                ).map(a => <span key={a} className="detail-area-chip">{a}</span>)}
-              </div>
-
-              <div className="detail-section-title">Sobre</div>
-              <div className="detail-bio">{selected.bio}</div>
-
-              {selected.experiencias && selected.experiencias.length > 0 && (
-                <>
-                  <div className="detail-section-title">Experiências profissionais</div>
-                  {selected.experiencias.map((exp, i) => (
-                    <div key={i} className="detail-exp">
-                      <div className="exp-cargo">{exp.cargo}</div>
-                      <div className="exp-empresa">{exp.empresa}</div>
-                      <div className="exp-periodo">{formatPeriodo(exp)}</div>
-                      {exp.resumo && <div className="exp-resumo">{exp.resumo}</div>}
-                    </div>
-                  ))}
-                </>
-              )}
-
-              <a href={whatsappLink(selected.whatsapp)} target="_blank" rel="noopener" className="btn-whatsapp">
-                💬 Chamar no WhatsApp
-              </a>
-
-              <div style={{ marginTop: 24 }}>
-                <div className="detail-section-title" style={{ marginTop: 0 }}>Status</div>
-                <div className="status-buttons">
-                  {(['novo', 'contatado', 'agendado', 'descartado'] as const).map(s => (
-                    <button
-                      key={s}
-                      className={`status-btn ${s} ${selected.status === s ? 'active ' + s : ''}`}
-                      onClick={() => updateStatus(selected.id, s)}
-                    >
-                      {s === 'agendado' ? '💰 ' : ''}{s}
-                    </button>
-                  ))}
+                <div>
+                  <div className="label">{modal.tipo_conta === 'PF' ? 'Profissão' : 'Atividade'}</div>
+                  <div className="value">{modal.profissao || '—'}</div>
+                </div>
+                <div>
+                  <div className="label">{modal.tipo_conta === 'PF' ? 'Renda' : 'Faturamento'}</div>
+                  <div className="value">{modal.renda || '—'}</div>
                 </div>
               </div>
+
+              <div className="detail-section-title">Endereço</div>
+              <div className="detail-grid">
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <div className="value">
+                    {[modal.logradouro, modal.numero, modal.bairro].filter(Boolean).join(', ')}<br/>
+                    {[modal.cidade, modal.estado].filter(Boolean).join(' / ')} · CEP {modal.cep}
+                  </div>
+                </div>
+              </div>
+
+              <div className="detail-section-title">Documentos enviados</div>
+              <div className="docs-grid">
+                {['Documento (frente)', 'Documento (verso)', 'Selfie com documento', modal.tipo_conta === 'PF' ? 'Comprovante de residência' : 'Contrato social'].map((nome) => (
+                  <a key={nome} className="doc-thumb" href="#" onClick={e=>e.preventDefault()}>
+                    <div className="doc-thumb-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                    </div>
+                    <div className="doc-thumb-info">
+                      <div className="doc-thumb-titulo">{nome}</div>
+                      <div className="doc-thumb-sub">Clique pra visualizar</div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+
+              <div className="detail-section-title">Conta bancária gerada</div>
+              <div className="detail-grid">
+                <div>
+                  <div className="label">Agência</div>
+                  <div className="value mono">{modal.agencia}</div>
+                </div>
+                <div>
+                  <div className="label">Conta</div>
+                  <div className="value mono">{modal.numero_conta}</div>
+                </div>
+                <div>
+                  <div className="label">Saldo atual</div>
+                  <div className="value">R$ {(modal.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                </div>
+                <div>
+                  <div className="label">Cadastro em</div>
+                  <div className="value">{new Date(modal.created_at).toLocaleDateString('pt-BR')}</div>
+                </div>
+              </div>
+
+              {modal.status === 'em_analise' && (
+                <div className="action-buttons">
+                  <button className="btn-aprovar" onClick={()=>aprovar(modal.id, 'aprovado')}>
+                    ✓ Aprovar conta
+                  </button>
+                  <button className="btn-pedir-docs" onClick={()=>aprovar(modal.id, 'pendente_docs')}>
+                    Pedir mais docs
+                  </button>
+                  <button className="btn-reprovar" onClick={()=>aprovar(modal.id, 'reprovado')}>
+                    Reprovar
+                  </button>
+                </div>
+              )}
+
+              {modal.status !== 'em_analise' && (
+                <div className="action-buttons">
+                  <button className="btn-pedir-docs" onClick={()=>aprovar(modal.id, 'em_analise')}>
+                    Voltar para análise
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
