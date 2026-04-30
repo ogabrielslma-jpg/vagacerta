@@ -287,8 +287,11 @@ export default function Ativacao() {
         )}
       </div>
 
-      <div style={{ marginTop: 24, fontSize: 12, color: 'rgba(255,255,255,0.4)', position: 'relative', zIndex: 2 }}>
-        Pagamento processado por <strong style={{color:'rgba(255,255,255,0.7)'}}>ImperiumPay</strong> · 100% seguro
+      <div style={{ marginTop: 24, fontSize: 12, color: 'rgba(255,255,255,0.4)', position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        Conexão segura · SSL 256 bits · Selo DasBank
       </div>
 
       <style>{`

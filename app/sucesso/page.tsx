@@ -7,10 +7,12 @@ import { LogoMark } from '@/components/Logo';
 export default function Sucesso() {
   const router = useRouter();
 
-  // Redireciona automaticamente em 3s
+  // Faz logout antes de redirecionar pro login (limpa qualquer cookie residual)
   useEffect(() => {
-    const t = setTimeout(() => router.push('/ativacao'), 3000);
-    return () => clearTimeout(t);
+    fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+      const t = setTimeout(() => router.push('/login'), 3000);
+      return () => clearTimeout(t);
+    });
   }, [router]);
 
   return (
@@ -28,21 +30,20 @@ export default function Sucesso() {
 
         <h1>Cadastro recebido! 🎉</h1>
         <p>
-          Seus documentos foram aprovados em pré-análise. Pra <strong style={{color:'white'}}>finalizar a abertura</strong> da
-          sua conta global, você vai fazer um depósito inicial de <strong style={{color:'var(--mint)'}}>R$ 45</strong> via
-          PIX — esse valor fica como saldo na sua conta.
+          Seus documentos foram aprovados em pré-análise. <strong style={{color:'white'}}>Faça login</strong> com
+          seus dados pra acessar sua conta DasBank e finalizar a abertura.
         </p>
 
         <div className="sucesso-info">
-          <div className="sucesso-info-titulo">⚡ Por que esse depósito?</div>
+          <div className="sucesso-info-titulo">⚡ Próximo passo</div>
           <div className="sucesso-info-desc">
-            É uma reserva técnica exigida na ativação. O dinheiro é seu desde o primeiro segundo —
-            fica disponível na sua conta DasBank pra sacar ou usar como quiser em até 48h.
+            Após o login, você fará um depósito inicial de <strong style={{color:'var(--mint)'}}>R$ 45</strong> que
+            fica como saldo na sua conta — disponível pra sacar em até 48h.
           </div>
         </div>
 
         <button
-          onClick={() => router.push('/ativacao')}
+          onClick={() => router.push('/login')}
           style={{
             width: '100%',
             padding: '14px',
@@ -56,7 +57,7 @@ export default function Sucesso() {
             fontFamily: 'inherit',
           }}
         >
-          Pagar R$ 45 e ativar conta →
+          Acessar minha conta →
         </button>
 
         <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 14 }}>

@@ -1368,3 +1368,30 @@ footer .logo { color: white; }
 .login-card .field input { padding: 13px; }
 .login-link { text-align: center; margin-top: 18px; font-size: 13px; color: rgba(255,255,255,0.55); }
 .login-link a { color: var(--mint); font-weight: 600; text-decoration: none; }
+
+/* ============ MODAL ATIVAÇÃO ============ */
+.modal-ativacao {
+  max-width: 460px !important;
+  text-align: center;
+  position: relative;
+}
+.modal-ativacao-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: var(--mint-soft);
+  border: 1px solid rgba(0, 255, 179, 0.25);
+  border-radius: 100px;
+  font-size: 11px;
+  color: var(--mint);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 18px;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }

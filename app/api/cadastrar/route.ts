@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { supabaseAdmin } from '@/lib/supabase';
-import { generateToken } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -73,13 +72,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erro ao salvar cadastro' }, { status: 500 });
     }
 
-    const token = generateToken(novo.id, novo.email);
+    // NÃO auto-loga: limpa qualquer cookie residual e deixa o cliente
+    // ir pra /login com email/senha. Evita estado inconsistente entre
+    // múltiplos cadastros na mesma sessão.
     const response = NextResponse.json({ ok: true, id: novo.id });
-    response.cookies.set('db_token', token, {
+    response.cookies.set('db_token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30,
+      maxAge: 0,
       path: '/',
     });
 

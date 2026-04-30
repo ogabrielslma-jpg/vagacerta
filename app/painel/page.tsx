@@ -36,6 +36,7 @@ export default function Painel() {
   const [mostraSaldo, setMostraSaldo] = useState(true);
   const [moedaSelecionada, setMoedaSelecionada] = useState('BRL');
   const [modalAcao, setModalAcao] = useState<string | null>(null);
+  const [modalAtivacao, setModalAtivacao] = useState(false);
 
   useEffect(() => {
     fetch('/api/painel/me')
@@ -44,7 +45,13 @@ export default function Painel() {
         return r.json();
       })
       .then(d => {
-        if (d?.cliente) setCliente(d.cliente);
+        if (d?.cliente) {
+          setCliente(d.cliente);
+          // Abre modal de ativação automaticamente após 800ms se conta não ativada
+          if (!d.cliente.conta_ativada) {
+            setTimeout(() => setModalAtivacao(true), 800);
+          }
+        }
         setCarregando(false);
       })
       .catch(() => router.push('/login'));
@@ -349,6 +356,106 @@ export default function Painel() {
               <strong style={{color:'white'}}> {modalAcao}</strong> direto pelo painel DasBank Global.
             </p>
             <button className="modal-close-btn" onClick={()=>setModalAcao(null)}>Entendi</button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Ativação - aparece automaticamente */}
+      {modalAtivacao && !cliente.conta_ativada && (
+        <div className="modal-backdrop" onClick={()=>setModalAtivacao(false)}>
+          <div className="modal modal-ativacao" onClick={e=>e.stopPropagation()}>
+            <div className="modal-ativacao-badge">
+              <span style={{
+                width: 6, height: 6, background: 'var(--mint)',
+                borderRadius: '50%', boxShadow: '0 0 8px var(--mint)',
+                animation: 'pulse 2s infinite',
+                display: 'inline-block', marginRight: 6,
+              }}/>
+              Ação necessária
+            </div>
+
+            <div className="modal-icon" style={{
+              background: 'var(--mint)',
+              color: 'var(--black)',
+              boxShadow: '0 0 30px var(--mint-glow)',
+            }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+
+            <h2>Ative sua conta global</h2>
+            <p style={{ marginBottom: 16 }}>
+              Bem-vindo ao DasBank, <strong style={{color:'white'}}>{nomePrimeiro}</strong>! 🎉
+              <br/><br/>
+              Pra finalizar a abertura da sua conta, é necessário um <strong style={{color:'var(--mint)'}}>depósito
+              inicial de R$ 45,00</strong> via PIX. Esse valor fica como <strong style={{color:'white'}}>saldo
+              na sua conta</strong> e estará disponível pra saque ou movimentação em até 48 horas.
+            </p>
+
+            <div style={{
+              background: 'var(--mint-soft)',
+              border: '1px solid rgba(0, 255, 179, 0.2)',
+              borderRadius: 12,
+              padding: 14,
+              marginBottom: 18,
+              fontSize: 13,
+              color: 'rgba(255,255,255,0.75)',
+              textAlign: 'left',
+              lineHeight: 1.55,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span>Valor do depósito</span>
+                <strong style={{color:'white'}}>R$ 45,00</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span>Forma de pagamento</span>
+                <strong style={{color:'white'}}>PIX</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Disponível em</span>
+                <strong style={{color:'var(--mint)'}}>até 48 horas</strong>
+              </div>
+            </div>
+
+            <button
+              onClick={() => router.push('/ativacao')}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: 'var(--mint)',
+                color: 'var(--black)',
+                border: 'none',
+                borderRadius: 10,
+                fontWeight: 700,
+                fontSize: 15,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                marginBottom: 8,
+                boxShadow: '0 0 20px var(--mint-glow)',
+              }}
+            >
+              Pagar R$ 45 e ativar conta →
+            </button>
+
+            <button
+              onClick={() => setModalAtivacao(false)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: 'transparent',
+                color: 'rgba(255,255,255,0.5)',
+                border: '1px solid var(--black-border)',
+                borderRadius: 10,
+                fontWeight: 500,
+                fontSize: 13,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Fazer depois
+            </button>
           </div>
         </div>
       )}
