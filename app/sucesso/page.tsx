@@ -7,7 +7,6 @@ import { LogoMark } from '@/components/Logo';
 export default function Sucesso() {
   const router = useRouter();
 
-  // Faz logout antes de redirecionar pro login (limpa qualquer cookie residual)
   useEffect(() => {
     fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
       const t = setTimeout(() => router.push('/login'), 3000);
@@ -28,17 +27,17 @@ export default function Sucesso() {
           </svg>
         </div>
 
-        <h1>Cadastro recebido! 🎉</h1>
+        <h1>Conta criada com sucesso! 🎉</h1>
         <p>
-          Seus documentos foram aprovados em pré-análise. <strong style={{color:'white'}}>Faça login</strong> com
-          seus dados pra acessar sua conta DasBank e finalizar a abertura.
+          Bem-vindo ao DasBank! Seu cadastro foi <strong style={{color:'white'}}>aprovado em pré-análise</strong>.
+          Faça login pra acessar sua conta global e começar a movimentar.
         </p>
 
         <div className="sucesso-info">
-          <div className="sucesso-info-titulo">⚡ Próximo passo</div>
+          <div className="sucesso-info-titulo">🌍 O que te espera</div>
           <div className="sucesso-info-desc">
-            Após o login, você fará um depósito inicial de <strong style={{color:'var(--mint)'}}>R$ 45</strong> que
-            fica como saldo na sua conta — disponível pra sacar em até 48h.
+            Conta global multi-moeda, recebimento de mais de 140 países, câmbio comercial
+            sem IOF e cartão internacional sem anuidade.
           </div>
         </div>
 
