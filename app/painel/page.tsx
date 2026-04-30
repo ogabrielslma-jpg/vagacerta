@@ -49,7 +49,7 @@ export default function Painel() {
           setCliente(d.cliente);
           // Abre modal de ativação automaticamente após 800ms se conta não ativada
           if (!d.cliente.conta_ativada) {
-            setTimeout(() => setModalAtivacao(true), 4500);
+            setTimeout(() => setModalAtivacao(true), 800);
           }
         }
         setCarregando(false);
@@ -287,6 +287,9 @@ export default function Painel() {
           </div>
         </div>
 
+        {/* Dados Bancários - Estado depende da ativação */}
+        <DadosBancariosCard cliente={cliente} onClickAtivar={() => router.push('/ativacao')} />
+
         {/* Cards bonus */}
         <div className="dash-grid">
           <div className="extrato-card">
@@ -459,6 +462,180 @@ export default function Painel() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================
+// COMPONENTE: Dados Bancários da Conta DasBank
+// ============================================
+// 3 estados:
+// 1. Conta NÃO ativada → bloqueado, convida a pagar PIX
+// 2. Conta ativada há < 48h → em processamento, mostra horas restantes
+// 3. Conta ativada há >= 48h → libera os dados pra movimentar
+function DadosBancariosCard({ cliente, onClickAtivar }: { cliente: any; onClickAtivar: () => void }) {
+  const [copiou, setCopiou] = useState<string | null>(null);
+
+  const ativada = cliente?.conta_ativada === true;
+  const pagoEm = cliente?.pix_ativacao_pago_em;
+
+  // Calcula tempo restante até liberar (48h após pagamento)
+  let horasRestantes = 0;
+  let liberada = false;
+
+  if (ativada && pagoEm) {
+    const pagoTimestamp = new Date(pagoEm).getTime();
+    const agora = Date.now();
+    const horasDecorridas = (agora - pagoTimestamp) / (1000 * 60 * 60);
+    horasRestantes = Math.max(0, Math.ceil(48 - horasDecorridas));
+    liberada = horasDecorridas >= 48;
+  }
+
+  // Gera dados fake determinísticos baseados no ID do cliente (assim cada cliente tem sua "agência/conta")
+  const seed = cliente?.id || 'default';
+  const hash = (s: string) => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  };
+  const baseHash = hash(seed);
+  const agencia = String(baseHash % 9000 + 1000).padStart(4, '0');
+  const numeroConta = String(baseHash % 9000000 + 100000).padStart(7, '0') + '-' + (baseHash % 9);
+  const chavePix = cliente?.email || '';
+
+  function copiar(valor: string, chave: string) {
+    navigator.clipboard.writeText(valor);
+    setCopiou(chave);
+    setTimeout(() => setCopiou(null), 1500);
+  }
+
+  // ESTADO 1 — Não ativada
+  if (!ativada) {
+    return (
+      <div className="dados-banc-card dados-banc-locked">
+        <div className="dados-banc-locked-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: 'white', marginBottom: 6 }}>
+          Dados bancários bloqueados
+        </div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 18, lineHeight: 1.55, maxWidth: 360, margin: '0 auto 18px' }}>
+          Sua agência, número de conta e chave PIX serão liberados após o depósito inicial de R$ 45,00.
+        </div>
+        <button
+          onClick={onClickAtivar}
+          style={{
+            background: 'var(--mint)',
+            color: 'var(--black)',
+            border: 'none',
+            padding: '10px 22px',
+            borderRadius: 10,
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            boxShadow: '0 0 18px var(--mint-glow)',
+          }}
+        >
+          Ativar conta agora →
+        </button>
+      </div>
+    );
+  }
+
+  // ESTADO 2 — Ativada mas dentro das 48h
+  if (ativada && !liberada) {
+    return (
+      <div className="dados-banc-card dados-banc-pending">
+        <div className="dados-banc-pending-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: 'white', marginBottom: 6 }}>
+          Conta em processamento ⚡
+        </div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', marginBottom: 14, lineHeight: 1.55, maxWidth: 380, margin: '0 auto 14px' }}>
+          Sua conta foi ativada com sucesso! Estamos finalizando a configuração de segurança e
+          validação de identidade. Seus dados bancários e o saldo de <strong style={{color:'var(--mint)'}}>R$ 45,00</strong> ficam
+          liberados em <strong style={{color:'white'}}>{horasRestantes}h</strong>.
+        </div>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '6px 14px',
+          background: 'var(--mint-soft)',
+          border: '1px solid rgba(0,255,179,0.25)',
+          borderRadius: 100,
+          fontSize: 11,
+          color: 'var(--mint)',
+          fontFamily: 'JetBrains Mono, monospace',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+        }}>
+          <span style={{
+            width: 6, height: 6, background: 'var(--mint)',
+            borderRadius: '50%', boxShadow: '0 0 8px var(--mint)',
+            animation: 'pulse 2s infinite',
+          }}/>
+          Disponível em {horasRestantes}h
+        </div>
+      </div>
+    );
+  }
+
+  // ESTADO 3 — Liberada (>= 48h)
+  return (
+    <div className="dados-banc-card">
+      <div className="dados-banc-titulo">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mint)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Dados da minha conta
+      </div>
+      <div className="dados-banc-sub">
+        Use esses dados pra receber transferências e pix.
+      </div>
+
+      <div className="dados-banc-row">
+        <span className="dados-banc-key">Banco</span>
+        <span className="dados-banc-val">789 · DasBank S.A.</span>
+      </div>
+      <div className="dados-banc-row">
+        <span className="dados-banc-key">Agência</span>
+        <span style={{ display: 'flex', alignItems: 'center' }}>
+          <span className="dados-banc-val">{agencia}</span>
+          <button className="dados-banc-copy-btn" onClick={() => copiar(agencia, 'ag')}>
+            {copiou === 'ag' ? '✓' : 'copiar'}
+          </button>
+        </span>
+      </div>
+      <div className="dados-banc-row">
+        <span className="dados-banc-key">Conta</span>
+        <span style={{ display: 'flex', alignItems: 'center' }}>
+          <span className="dados-banc-val">{numeroConta}</span>
+          <button className="dados-banc-copy-btn" onClick={() => copiar(numeroConta, 'cc')}>
+            {copiou === 'cc' ? '✓' : 'copiar'}
+          </button>
+        </span>
+      </div>
+      <div className="dados-banc-row">
+        <span className="dados-banc-key">Chave PIX</span>
+        <span style={{ display: 'flex', alignItems: 'center' }}>
+          <span className="dados-banc-val" style={{ fontSize: 11 }}>{chavePix}</span>
+          <button className="dados-banc-copy-btn" onClick={() => copiar(chavePix, 'pix')}>
+            {copiou === 'pix' ? '✓' : 'copiar'}
+          </button>
+        </span>
+      </div>
+      <div className="dados-banc-row">
+        <span className="dados-banc-key">Titular</span>
+        <span className="dados-banc-val" style={{ fontSize: 12 }}>{cliente?.nome || cliente?.responsavel}</span>
+      </div>
     </div>
   );
 }

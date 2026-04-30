@@ -1395,3 +1395,392 @@ footer .logo { color: white; }
   50% { opacity: 0.4; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============ DASHBOARD PREVIEW (LANDING) ============ */
+.dash-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 32px;
+  margin-top: 48px;
+  align-items: center;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 900px) {
+  .dash-preview-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .dash-mockup-mobile { display: flex; justify-content: center; }
+}
+
+/* Browser frame (desktop) */
+.dash-mockup-desktop {
+  background: #0F0F0F;
+  border: 1px solid var(--black-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 80px rgba(0,255,179,0.05);
+}
+.mockup-browser-bar {
+  background: #161616;
+  border-bottom: 1px solid var(--black-border);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.browser-dots {
+  display: flex;
+  gap: 5px;
+}
+.browser-dots span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #2a2a2a;
+}
+.browser-dots span:nth-child(1) { background: #ff5f57; }
+.browser-dots span:nth-child(2) { background: #febc2e; }
+.browser-dots span:nth-child(3) { background: #28c840; }
+.browser-url {
+  background: #0a0a0a;
+  border: 1px solid var(--black-border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  font-family: 'JetBrains Mono', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mockup-dash-content {
+  padding: 22px;
+  background: var(--black);
+}
+.mock-dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.mock-brand {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.025em;
+}
+.mock-avatar {
+  width: 28px;
+  height: 28px;
+  background: var(--mint);
+  color: var(--black);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.mock-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+.mock-tab {
+  padding: 6px 12px;
+  border-radius: 100px;
+  border: 1px solid var(--black-border);
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+}
+.mock-tab.active {
+  background: var(--mint-soft);
+  border-color: rgba(0,255,179,0.25);
+  color: var(--mint);
+}
+
+.mock-saldo-card {
+  background: linear-gradient(135deg, rgba(0,255,179,0.08), rgba(0,255,179,0.02));
+  border: 1px solid rgba(0,255,179,0.18);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+.mock-saldo-label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.mock-saldo-valor {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: white;
+  margin-bottom: 4px;
+}
+.mock-saldo-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.mock-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.mock-action {
+  background: var(--black-elevated);
+  border: 1px solid var(--black-border);
+  border-radius: 10px;
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+}
+.mock-action-icon {
+  font-size: 18px;
+  margin-bottom: 4px;
+  color: var(--mint);
+  font-weight: 700;
+}
+
+.mock-extrato-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.mock-extrato {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mock-tx {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--black-elevated);
+  border: 1px solid var(--black-border);
+  border-radius: 10px;
+}
+.mock-tx-flag {
+  font-size: 18px;
+  width: 28px;
+  text-align: center;
+}
+.mock-tx-nome {
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+}
+.mock-tx-sub {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 1px;
+}
+.mock-tx-valor {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+.mock-tx-valor.up { color: var(--mint); }
+.mock-tx-valor.down { color: rgba(255,255,255,0.7); }
+
+/* Phone frame (mobile mockup) */
+.phone-frame {
+  width: 270px;
+  height: 540px;
+  background: #1a1a1a;
+  border: 8px solid #0a0a0a;
+  border-radius: 38px;
+  padding: 0;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 60px rgba(0,255,179,0.06);
+  position: relative;
+  overflow: hidden;
+}
+.phone-notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 22px;
+  background: #0a0a0a;
+  border-radius: 0 0 14px 14px;
+  z-index: 2;
+}
+.phone-screen {
+  background: var(--black);
+  width: 100%;
+  height: 100%;
+  border-radius: 30px;
+  overflow: hidden;
+  position: relative;
+}
+.phone-status-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 22px 6px;
+  font-size: 10px;
+  color: white;
+  font-weight: 600;
+}
+.phone-content {
+  padding: 12px 16px 20px;
+}
+.phone-greeting {
+  margin-bottom: 16px;
+  color: white;
+}
+.phone-saldo {
+  background: linear-gradient(135deg, rgba(0,255,179,0.1), rgba(0,255,179,0.02));
+  border: 1px solid rgba(0,255,179,0.2);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  color: white;
+}
+.phone-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.phone-action {
+  flex: 1;
+  background: var(--black-elevated);
+  border: 1px solid var(--black-border);
+  border-radius: 10px;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 9px;
+  color: rgba(255,255,255,0.7);
+}
+.phone-action-icon {
+  font-size: 16px;
+  color: var(--mint);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.phone-cards-titulo {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.phone-card-acc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--black-elevated);
+  border: 1px solid var(--black-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  color: white;
+}
+
+/* ============ DADOS BANCÁRIOS (PAINEL) ============ */
+.dados-banc-card {
+  background: var(--black-elevated);
+  border: 1px solid var(--black-border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.dados-banc-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dados-banc-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 16px;
+}
+.dados-banc-locked {
+  background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(245,158,11,0.02));
+  border-color: rgba(245,158,11,0.25);
+  text-align: center;
+  padding: 28px 20px;
+}
+.dados-banc-locked-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(245,158,11,0.15);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+  color: #F59E0B;
+}
+.dados-banc-pending {
+  background: linear-gradient(135deg, rgba(0,255,179,0.06), rgba(0,255,179,0.02));
+  border-color: rgba(0,255,179,0.2);
+  text-align: center;
+  padding: 28px 20px;
+}
+.dados-banc-pending-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(0,255,179,0.12);
+  border: 1px solid rgba(0,255,179,0.3);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+  color: var(--mint);
+  font-weight: 700;
+}
+.dados-banc-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--black-border);
+  font-size: 13px;
+}
+.dados-banc-row:last-child { border-bottom: none; }
+.dados-banc-key {
+  color: rgba(255,255,255,0.55);
+}
+.dados-banc-val {
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+.dados-banc-copy-btn {
+  margin-left: 8px;
+  background: transparent;
+  border: 1px solid var(--black-border);
+  color: rgba(255,255,255,0.6);
+  padding: 2px 8px;
+  font-size: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.dados-banc-copy-btn:hover {
+  color: var(--mint);
+  border-color: var(--mint);
+}

@@ -43,7 +43,7 @@ Vai em **Vercel → seu projeto → Settings → Environment Variables** e adici
 No dashboard do Imperium, configura o **Webhook Permanente** apontando pra:
 
 ```
-https://dasbankapp.com/api/webhook/imperium
+https://vagacerta-rust.vercel.app/api/webhook/imperium
 ```
 
 E configura o **postback secret** (se aplicável) na mesma env var acima.

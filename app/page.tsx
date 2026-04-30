@@ -556,6 +556,176 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Dashboard Preview - Mockup */}
+      <section className="section dashboard-preview-section">
+        <div className="container">
+          <div className="section-eyebrow">Painel da sua conta</div>
+          <h2 className="section-title">Tudo no <span className="accent">seu controle.</span></h2>
+          <p className="section-sub">
+            Saldo multi-moeda, dados bancários internacionais e extrato em tempo real. Bonito, simples, completo.
+          </p>
+
+          <div className="dash-preview-grid">
+            {/* Mockup Desktop */}
+            <div className="dash-mockup-desktop">
+              <div className="mockup-browser-bar">
+                <div className="browser-dots">
+                  <span/><span/><span/>
+                </div>
+                <div className="browser-url">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  dasbankapp.com/painel
+                </div>
+              </div>
+              <div className="mockup-dash-content">
+                {/* Header */}
+                <div className="mock-dash-header">
+                  <div style={{display:'flex', alignItems:'center', gap:8}}>
+                    <div className="mock-logo-mark">
+                      <svg width="18" height="18" viewBox="0 0 60 60">
+                        <rect x="2" y="2" width="56" height="56" rx="12" fill="#0A0A0A"/>
+                        <circle cx="30" cy="30" r="14" fill="none" stroke="#00FFB3" strokeWidth="2.2"/>
+                        <path d="M 24 22 L 24 38 L 32 38 Q 39 38 39 30 Q 39 22 32 22 Z" fill="#00FFB3"/>
+                        <circle cx="42" cy="22" r="2" fill="#00FFB3"/>
+                      </svg>
+                    </div>
+                    <span className="mock-brand">Das<span style={{color:'#00FFB3'}}>Bank</span></span>
+                  </div>
+                  <div className="mock-avatar">G</div>
+                </div>
+
+                {/* Tabs moedas */}
+                <div className="mock-tabs">
+                  <div className="mock-tab active">🇧🇷 BRL</div>
+                  <div className="mock-tab">🇺🇸 USD</div>
+                  <div className="mock-tab">🇪🇺 EUR</div>
+                  <div className="mock-tab">🇬🇧 GBP</div>
+                </div>
+
+                {/* Saldo */}
+                <div className="mock-saldo-card">
+                  <div className="mock-saldo-label">Saldo disponível</div>
+                  <div className="mock-saldo-valor">R$ 12.847<span style={{color:'rgba(255,255,255,0.4)'}}>,30</span></div>
+                  <div className="mock-saldo-sub">≈ US$ 2.460 · €2.290</div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="mock-actions">
+                  <div className="mock-action">
+                    <div className="mock-action-icon">↓</div>
+                    <span>Receber</span>
+                  </div>
+                  <div className="mock-action">
+                    <div className="mock-action-icon">⇄</div>
+                    <span>Converter</span>
+                  </div>
+                  <div className="mock-action">
+                    <div className="mock-action-icon">↑</div>
+                    <span>Sacar</span>
+                  </div>
+                  <div className="mock-action">
+                    <div className="mock-action-icon">💳</div>
+                    <span>Cartão</span>
+                  </div>
+                </div>
+
+                {/* Extrato */}
+                <div className="mock-extrato-titulo">Últimas transações</div>
+                <div className="mock-extrato">
+                  <div className="mock-tx">
+                    <div className="mock-tx-flag">🇺🇸</div>
+                    <div style={{flex:1}}>
+                      <div className="mock-tx-nome">Stripe Inc.</div>
+                      <div className="mock-tx-sub">Recebimento USA · hoje</div>
+                    </div>
+                    <div className="mock-tx-valor up">+ R$ 4.247,80</div>
+                  </div>
+                  <div className="mock-tx">
+                    <div className="mock-tx-flag">🇪🇺</div>
+                    <div style={{flex:1}}>
+                      <div className="mock-tx-nome">Wise Europe</div>
+                      <div className="mock-tx-sub">Recebimento UE · ontem</div>
+                    </div>
+                    <div className="mock-tx-valor up">+ R$ 2.890,00</div>
+                  </div>
+                  <div className="mock-tx">
+                    <div className="mock-tx-flag">🇧🇷</div>
+                    <div style={{flex:1}}>
+                      <div className="mock-tx-nome">PIX para João Silva</div>
+                      <div className="mock-tx-sub">Transferência · 2 dias</div>
+                    </div>
+                    <div className="mock-tx-valor down">− R$ 850,00</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mockup Mobile */}
+            <div className="dash-mockup-mobile">
+              <div className="phone-frame">
+                <div className="phone-notch"/>
+                <div className="phone-screen">
+                  {/* Status bar */}
+                  <div className="phone-status-bar">
+                    <span>9:41</span>
+                    <span>📶 100%</span>
+                  </div>
+
+                  {/* Conteúdo */}
+                  <div className="phone-content">
+                    <div className="phone-greeting">
+                      <div style={{fontSize:11, color:'rgba(255,255,255,0.5)'}}>Bom dia,</div>
+                      <div style={{fontSize:18, fontWeight:700}}>Gabriel 👋</div>
+                    </div>
+
+                    <div className="phone-saldo">
+                      <div style={{fontSize:10, color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:'0.08em'}}>Saldo total</div>
+                      <div style={{fontSize:28, fontWeight:800, marginTop:4}}>R$ 12.847<span style={{color:'rgba(255,255,255,0.4)', fontSize:18}}>,30</span></div>
+                      <div style={{fontSize:11, color:'#00FFB3', marginTop:2}}>+R$ 4.247 hoje</div>
+                    </div>
+
+                    <div className="phone-actions">
+                      <div className="phone-action">
+                        <div className="phone-action-icon">↓</div>
+                        <span>Receber</span>
+                      </div>
+                      <div className="phone-action">
+                        <div className="phone-action-icon">⇄</div>
+                        <span>Trocar</span>
+                      </div>
+                      <div className="phone-action">
+                        <div className="phone-action-icon">💳</div>
+                        <span>Cartão</span>
+                      </div>
+                    </div>
+
+                    <div className="phone-cards-titulo">Suas contas</div>
+                    <div className="phone-card-acc">
+                      <span style={{fontSize:18}}>🇺🇸</span>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:11, color:'rgba(255,255,255,0.5)'}}>Conta USD</div>
+                        <div style={{fontSize:14, fontWeight:700}}>$ 2.460,15</div>
+                      </div>
+                      <span style={{color:'rgba(255,255,255,0.4)'}}>›</span>
+                    </div>
+                    <div className="phone-card-acc">
+                      <span style={{fontSize:18}}>🇪🇺</span>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:11, color:'rgba(255,255,255,0.5)'}}>Conta EUR</div>
+                        <div style={{fontSize:14, fontWeight:700}}>€ 2.290,40</div>
+                      </div>
+                      <span style={{color:'rgba(255,255,255,0.4)'}}>›</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Países */}
       <section className="section alt" id="paises">
         <div className="container">

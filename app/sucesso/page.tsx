@@ -7,6 +7,7 @@ import { LogoMark } from '@/components/Logo';
 export default function Sucesso() {
   const router = useRouter();
 
+  // Faz logout antes de redirecionar pro login (limpa qualquer cookie residual)
   useEffect(() => {
     fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
       const t = setTimeout(() => router.push('/login'), 3000);
